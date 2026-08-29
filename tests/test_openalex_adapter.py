@@ -84,7 +84,7 @@ class OpenAlexAdapterTests(unittest.IsolatedAsyncioTestCase):
             if cursor == "NEXT":
                 return httpx.Response(
                     200,
-                    json={"results": [second_work], "meta": {"next_cursor": null}},
+                    json={"results": [second_work], "meta": {"next_cursor": None}},
                 )
             return httpx.Response(400, json={"error": "unexpected cursor"})
 
