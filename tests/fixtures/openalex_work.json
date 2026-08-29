@@ -1,0 +1,63 @@
+{
+  "id": "https://openalex.org/W123456789",
+  "doi": "https://doi.org/10.1234/example",
+  "title": "Emerging Neuromorphic Edge Intelligence",
+  "publication_year": 2026,
+  "publication_date": "2026-07-15",
+  "updated_date": "2026-08-20T10:00:00",
+  "language": "en",
+  "type": "article",
+  "cited_by_count": 7,
+  "fwci": 2.4,
+  "is_retracted": false,
+  "is_paratext": false,
+  "abstract_inverted_index": {
+    "Neuromorphic": [0],
+    "edge": [1],
+    "systems": [2],
+    "reduce": [3],
+    "energy": [4],
+    "use.": [5]
+  },
+  "authorships": [
+    {
+      "author": {
+        "id": "https://openalex.org/A1",
+        "display_name": "Ada Example"
+      },
+      "institutions": [
+        {
+          "id": "https://openalex.org/I1",
+          "display_name": "Example Institute",
+          "type": "education",
+          "country_code": "AT"
+        }
+      ]
+    }
+  ],
+  "topics": [
+    {
+      "id": "https://openalex.org/T1",
+      "display_name": "Neuromorphic Computing"
+    }
+  ],
+  "open_access": {
+    "is_oa": true,
+    "oa_status": "gold"
+  },
+  "primary_location": {
+    "license": "cc-by"
+  },
+  "best_oa_location": {},
+  "locations": [
+    {
+      "source": {
+        "id": "S1"
+      }
+    }
+  ],
+  "referenced_works": [
+    "W1",
+    "W2"
+  ]
+}
