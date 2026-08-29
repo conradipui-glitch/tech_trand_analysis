@@ -1,0 +1,57 @@
+name: github-discovery-smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      direction:
+        description: Technology direction
+        required: false
+        default: AI agents
+      query:
+        description: GitHub repository search query
+        required: false
+        default: ai agent framework
+  push:
+    paths:
+      - src/tech_trend_analysis/sources/github.py
+      - scripts/run_github_discovery.py
+      - config/sources.yaml
+      - .github/workflows/github-discovery-smoke.yml
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+      - name: Collect GitHub observations
+        run: |
+          python scripts/run_github_discovery.py \
+            --direction "${{ inputs.direction || 'AI agents' }}" \
+            --query "${{ inputs.query || 'ai agent framework' }}" \
+            --profile software_ai \
+            --limit 20 \
+            --per-page 20 \
+            --max-pages 1 \
+            --output validation/results/github-discovery-smoke.jsonl
+          test -s validation/results/github-discovery-smoke.jsonl
+      - name: Upload smoke observations
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-discovery-smoke
+          path: validation/results/github-discovery-smoke.jsonl
+          if-no-files-found: error
+          retention-days: 14
