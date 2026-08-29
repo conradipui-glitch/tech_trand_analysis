@@ -1,0 +1,174 @@
+{
+  "schema_version": "0.2.0",
+  "request": {
+    "technology_direction": "AI agents",
+    "normalized_direction": "AI agent technologies",
+    "source_profile": "software_ai",
+    "generated_at": "2026-08-29T16:50:00Z",
+    "methodology_version": "0.1.0",
+    "requested_limit": 15,
+    "coverage_start": "2025-01-01",
+    "coverage_end": "2026-08-29"
+  },
+  "summary": {
+    "status": "partial",
+    "trend_count": 1,
+    "candidate_count": 8,
+    "observation_count": 164,
+    "providers_used": [
+      "github",
+      "huggingface",
+      "openalex"
+    ],
+    "coverage": {
+      "attempted": [
+        "github",
+        "huggingface",
+        "openalex",
+        "epo_ops"
+      ],
+      "succeeded": [
+        "github",
+        "huggingface",
+        "openalex"
+      ],
+      "failed": [
+        "epo_ops"
+      ]
+    },
+    "warnings": [
+      "Example fixture contains one trend, not a full TOP-15."
+    ]
+  },
+  "trends": [
+    {
+      "rank": 1,
+      "trend_id": "trend:agent-browser-control",
+      "name": "Agent-oriented browser control",
+      "description": "Tooling that gives AI agents a compact, programmatic browser-control layer.",
+      "stage": "emerging",
+      "score": {
+        "total": 78.4,
+        "confidence": 0.82,
+        "components": {
+          "growth": {
+            "value": 88,
+            "explanation": "Rapid growth of implementation evidence."
+          },
+          "acceleration": {
+            "value": 84,
+            "explanation": "Recent observation windows grow faster than earlier windows."
+          },
+          "novelty": {
+            "value": 72,
+            "explanation": "Cluster remains distinct from generic browser automation."
+          },
+          "recency": {
+            "value": 91,
+            "explanation": "Persistent activity is recent."
+          },
+          "evidence_diversity": {
+            "value": 65,
+            "explanation": "Implementation and research evidence are present."
+          },
+          "actor_diversity": {
+            "value": 74,
+            "explanation": "Multiple independent organizations contribute."
+          },
+          "persistence": {
+            "value": 79,
+            "explanation": "Signal persists across multiple periods."
+          },
+          "maturity_penalty": {
+            "value": 18,
+            "explanation": "The area is not yet broadly mature."
+          }
+        }
+      },
+      "first_seen": {
+        "period": "2025-Q4",
+        "method": "first_persistent_semantic_cluster",
+        "confidence": 0.76
+      },
+      "motivation": {
+        "problem": "General-purpose agents need reliable browser interaction without carrying a large browser-specific prompt and tool surface.",
+        "advantage": "A compact control layer can reduce integration complexity and make browser actions easier to orchestrate."
+      },
+      "case_example": {
+        "name": "vercel-labs/agent-browser",
+        "kind": "project",
+        "description": "Public implementation of browser automation tooling aimed at AI agents.",
+        "source": {
+          "observation_id": "github:vercel-labs/agent-browser",
+          "provider": "github",
+          "evidence_type": "implementation",
+          "title": "agent-browser",
+          "url": "https://github.com/vercel-labs/agent-browser",
+          "date": "2026-01-11",
+          "actor": "vercel-labs",
+          "why_representative": "Recent high-activity implementation evidence."
+        }
+      },
+      "evidence_summary": {
+        "total": 164,
+        "by_type": {
+          "implementation": 97,
+          "research": 67
+        },
+        "actor_count": 41,
+        "provider_count": 3,
+        "country_count": null
+      },
+      "trajectory": [
+        {
+          "period": "2026-05",
+          "total": 19,
+          "by_evidence_type": {
+            "implementation": 10,
+            "research": 9
+          }
+        },
+        {
+          "period": "2026-06",
+          "total": 27,
+          "by_evidence_type": {
+            "implementation": 16,
+            "research": 11
+          }
+        },
+        {
+          "period": "2026-07",
+          "total": 39,
+          "by_evidence_type": {
+            "implementation": 25,
+            "research": 14
+          }
+        },
+        {
+          "period": "2026-08",
+          "total": 58,
+          "by_evidence_type": {
+            "implementation": 38,
+            "research": 20
+          }
+        }
+      ],
+      "representative_sources": [
+        {
+          "observation_id": "github:vercel-labs/agent-browser",
+          "provider": "github",
+          "evidence_type": "implementation",
+          "title": "agent-browser",
+          "url": "https://github.com/vercel-labs/agent-browser",
+          "date": "2026-01-11",
+          "actor": "vercel-labs",
+          "why_representative": "Implementation signal."
+        }
+      ],
+      "methodology_explanation": "Ranked as emerging because the semantic cluster is recent, persistent and accelerating, with strong implementation activity and independent actors; maturity penalty remains low.",
+      "limitations": [
+        "Example fixture; trend metrics are illustrative except the cited repository metadata."
+      ]
+    }
+  ]
+}
