@@ -1,4 +1,4 @@
-version: 0.5.0
+version: 0.5.1
 preregistered_at: "2026-08-29"
 notes:
   - "Milestone dates are ecosystem/adoption proxies selected before collecting historical curves; they are not claims that the technology became universally obvious on that exact day."
@@ -7,6 +7,7 @@ notes:
   - "v0.3 strengthened alias/context disambiguation and excluded current GitHub repository metadata from historical scoring because mutable name/description can leak future terminology backward to repository created_at."
   - "v0.4 preserves the original broad discovery queries and all preregistered dates, but adds a mechanically targeted historical query for each already-discovered semantic cluster. This mirrors production targeted backfill: discovery is broad; history is cluster-conditioned."
   - "v0.5 keeps every original origin/milestone date and adds preregistered GitHub repositories for B-032. GitHub implementation time is eligible only from a relevant commit/release/tag timestamp; repository created_at and current description remain ineligible."
+  - "v0.5.1 adds repository-specific context terms for PEFT so lowercase `lora` commit messages can be verified without treating unrelated LoRa radio references as technology evidence."
 
 cases:
   - id: rag
@@ -77,8 +78,10 @@ cases:
           distinctive_terms:
             - "LoRA"
         - repository: "huggingface/peft"
-          distinctive_terms:
-            - "LoRA"
+          context_terms:
+            - "support"
+            - "peft"
+            - "config"
     origin:
       date: "2021-06-17"
       kind: research
