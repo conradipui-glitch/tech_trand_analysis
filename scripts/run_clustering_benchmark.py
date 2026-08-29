@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -18,6 +18,9 @@ from sklearn.metrics import (
 )
 
 from tech_trend_analysis.evaluation import load_benchmark_dataset
+
+
+THRESHOLDS = [round(value, 3) for value in np.arange(0.05, 0.651, 0.025)]
 
 
 def evaluate(true_labels, predicted_labels, *, algorithm: str, params: dict):
@@ -49,6 +52,87 @@ def ranking_key(row, true_cluster_count: int):
     )
 
 
+def run_algorithm(vectors, algorithm: str, params: dict):
+    if algorithm == "agglomerative_average_cosine":
+        return AgglomerativeClustering(
+            n_clusters=None,
+            metric="cosine",
+            linkage="average",
+            distance_threshold=float(params["distance_threshold"]),
+            compute_full_tree=True,
+        ).fit_predict(vectors)
+    if algorithm == "dbscan_cosine":
+        return DBSCAN(
+            eps=float(params["eps"]),
+            min_samples=int(params["min_samples"]),
+            metric="cosine",
+        ).fit_predict(vectors)
+    raise ValueError(f"unknown algorithm: {algorithm}")
+
+
+def sweep(vectors, true_labels):
+    results = []
+    for threshold in THRESHOLDS:
+        params = {"distance_threshold": float(threshold)}
+        labels = run_algorithm(vectors, "agglomerative_average_cosine", params)
+        results.append(
+            evaluate(
+                true_labels,
+                labels,
+                algorithm="agglomerative_average_cosine",
+                params=params,
+            )
+        )
+
+    for eps in THRESHOLDS:
+        for min_samples in (2, 3):
+            params = {"eps": float(eps), "min_samples": min_samples}
+            labels = run_algorithm(vectors, "dbscan_cosine", params)
+            results.append(
+                evaluate(
+                    true_labels,
+                    labels,
+                    algorithm="dbscan_cosine",
+                    params=params,
+                )
+            )
+
+    true_cluster_count = len(set(int(value) for value in true_labels))
+    ranked = sorted(
+        results,
+        key=lambda row: ranking_key(row, true_cluster_count),
+        reverse=True,
+    )
+    return ranked, results
+
+
+def cluster_composition(rows, predicted_labels):
+    composition = defaultdict(Counter)
+    for row, label in zip(rows, predicted_labels, strict=True):
+        composition[str(int(label))][row["cluster"]] += 1
+    return {
+        label: dict(sorted(counts.items()))
+        for label, counts in sorted(composition.items(), key=lambda item: int(item[0]))
+    }
+
+
+def benchmark_subset(rows, vectors):
+    cluster_names = sorted({row["cluster"] for row in rows})
+    cluster_to_id = {name: idx for idx, name in enumerate(cluster_names)}
+    true_labels = np.array([cluster_to_id[row["cluster"]] for row in rows])
+    ranked, results = sweep(vectors, true_labels)
+    best = dict(ranked[0])
+    best_labels = run_algorithm(vectors, best["algorithm"], best["params"])
+    best["composition"] = cluster_composition(rows, best_labels)
+    return {
+        "document_count": len(rows),
+        "true_cluster_count": len(cluster_names),
+        "best": best,
+        "top10": ranked[:10],
+        "all_results": results,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="BAAI/bge-m3")
@@ -58,10 +142,8 @@ def main() -> int:
     args = parser.parse_args()
 
     dataset = load_benchmark_dataset(args.evaluation_dir)
-    texts = [row["text"] for row in dataset.documents]
-    cluster_names = sorted({row["cluster"] for row in dataset.documents})
-    cluster_to_id = {name: idx for idx, name in enumerate(cluster_names)}
-    true_labels = np.array([cluster_to_id[row["cluster"]] for row in dataset.documents])
+    rows = dataset.documents
+    texts = [row["text"] for row in rows]
 
     model = SentenceTransformer(args.model, device="cpu")
     started = time.perf_counter()
@@ -74,62 +156,36 @@ def main() -> int:
     )
     encode_seconds = time.perf_counter() - started
 
-    results = []
-    thresholds = [round(value, 3) for value in np.arange(0.05, 0.651, 0.025)]
-    for threshold in thresholds:
-        labels = AgglomerativeClustering(
-            n_clusters=None,
-            metric="cosine",
-            linkage="average",
-            distance_threshold=float(threshold),
-            compute_full_tree=True,
-        ).fit_predict(vectors)
-        results.append(
-            evaluate(
-                true_labels,
-                labels,
-                algorithm="agglomerative_average_cosine",
-                params={"distance_threshold": float(threshold)},
-            )
-        )
+    global_result = benchmark_subset(rows, vectors)
+    by_profile = {}
+    for profile in sorted({row["profile"] for row in rows}):
+        indices = [index for index, row in enumerate(rows) if row["profile"] == profile]
+        profile_rows = [rows[index] for index in indices]
+        profile_vectors = vectors[indices]
+        by_profile[profile] = benchmark_subset(profile_rows, profile_vectors)
 
-    for eps in thresholds:
-        for min_samples in (2, 3):
-            labels = DBSCAN(
-                eps=float(eps),
-                min_samples=min_samples,
-                metric="cosine",
-            ).fit_predict(vectors)
-            results.append(
-                evaluate(
-                    true_labels,
-                    labels,
-                    algorithm="dbscan_cosine",
-                    params={"eps": float(eps), "min_samples": min_samples},
-                )
-            )
-
-    true_cluster_count = len(cluster_names)
-    ranked = sorted(
-        results,
-        key=lambda row: ranking_key(row, true_cluster_count),
-        reverse=True,
-    )
     payload = {
         "model": args.model,
-        "document_count": len(dataset.documents),
-        "true_cluster_count": true_cluster_count,
         "embedding_dimension": int(vectors.shape[1]),
         "encode_seconds": encode_seconds,
-        "best": ranked[0],
-        "top10": ranked[:10],
-        "all_results": results,
+        "global": global_result,
+        "by_profile": by_profile,
     }
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"best": payload["best"], "top10": payload["top10"]}, indent=2))
+    print(
+        json.dumps(
+            {
+                "global_best": global_result["best"],
+                "profile_best": {
+                    profile: result["best"] for profile, result in by_profile.items()
+                },
+            },
+            indent=2,
+        )
+    )
     return 0
 
 
