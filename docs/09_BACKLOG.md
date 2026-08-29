@@ -22,13 +22,13 @@
 - [x] B-020 Реализовать Source Router v0 (`software_ai`, `hardware_semiconductor`, `materials_energy`, `bio_medtech`, `mixed`) + routing tests.
 - [x] B-022 Собрать resumable collection vertical slice: OpenAlex → raw → Observation → checkpoint.
 - [x] B-023 Реализовать durable normalized ObservationStore. Memory + SQLite, D1-friendly schema.
+- [x] B-024 TOP-15 ranking + `TrendAnalysisResult` assembler. Deterministic ranking из уже обнаруженных TrendState; максимум 15, без LLM padding; кандидаты без grounded source fail-closed; schema contract tests green.
 - [x] B-025 Thin operator web shell на Cloudflare Workers + Static Assets. Live deploy + external public smoke green: HTML, `/api/health`, `/api/current`, RAG/LoRA snapshots.
 - [x] B-026 Grounded DeepSeek analyst layer через GitHub Actions secret `DEEPSEEK_API_KEY`. DeepSeek не участвует в discovery/ranking; citations constrained to input; unsupported problem/advantage claims fail-closed; live smoke green.
-- [ ] B-030 Retrospective validation/calibration. Первый preregistered RAG/LoRA run завершён и обнаружил methodological failure: broad keyword retrieval даёт большие pre-origin counts. Исправить history на semantic cluster-conditioned filtering и повторить те же preregistered cases без изменения milestone дат.
+- [ ] B-030 Retrospective validation/calibration. v0.1 обнаружил methodological failure: broad keyword retrieval давал большие pre-origin counts. v0.2 сохраняет те же preregistered RAG/LoRA origin/milestone/query и пропускает aggregate history через conservative semantic sample gate; live rerun запущен. Production backfill по-прежнему использует настоящий centroid similarity gate.
 
 ## NEXT
 
-- [ ] B-024 TOP-15 ranking + `TrendAnalysisResult` assembler после исправления retrospective history.
 - [ ] B-027 Подключить vetted DeepSeek narrative к опубликованному TOP-candidate snapshot после assembler; хранить enrichment как производный слой, не как evidence.
 - [ ] B-031 Проверить false positive: research-only cluster на retrospective/live evidence.
 - [ ] B-032 Проверить transition research → patent → implementation.
