@@ -1,0 +1,36 @@
+name: deepseek-analyst-smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/tech_trend_analysis/analyst.py"
+      - "scripts/smoke_deepseek_analyst.py"
+      - ".github/workflows/deepseek-smoke.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install project
+        run: python -m pip install -e .
+      - name: Run grounded DeepSeek analyst smoke
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: python scripts/smoke_deepseek_analyst.py
+      - name: Upload analyst result
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepseek-analyst-smoke
+          path: validation/results/deepseek-analyst-smoke.json
+          retention-days: 7
