@@ -107,3 +107,19 @@ Capability/cost spike показал, что Cloudflare подходит как 
 Workers AI free allocation при текущем тарифе Qwen3-Embedding-0.6B/BGE-M3 теоретически покрывает около 9.3M embedding input tokens/day, если не расходовать общий дневной neuron pool на другие модели. Поэтому Cloudflare embeddings включаются в benchmark рядом с local providers, но не считаются заранее победителем.
 
 R2 Data Catalog/R2 SQL остаются later-stage опцией: технически полезны для Iceberg/Parquet analytics, но создают лишнюю сложность до доказательства detector core.
+
+## ADR-015 — Durable normalized ObservationStore before embeddings
+**Status:** Accepted
+
+Между dedup и embeddings нужен отдельный долговременный слой нормализованных Observation. Иначе checkpoint может продвинуться, raw останется сохранённым, но downstream pipeline будет вынужден каждый раз восстанавливать normalized state из сырого batch.
+
+Для MVP используется стабильный интерфейс `ObservationStore`.
+
+Первая local/VPS реализация — SQLite из стандартной библиотеки:
+- `observation_id` как primary key;
+- JSON payload сохраняет полный Observation contract;
+- отдельные индексируемые поля для provider/evidence/artifact/date/direction/cluster;
+- повторный сбор обновляет запись через upsert;
+- схема намеренно близка к будущему D1 implementation.
+
+Parquet/DuckDB не добавляются на этом этапе только ради архитектурной симметрии. Они появятся, когда embedding/clustering benchmark даст реальный аналитический corpus и станет ясно, какие columnar queries действительно нужны.
