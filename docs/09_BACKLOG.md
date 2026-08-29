@@ -30,7 +30,7 @@
 
 ## NEXT
 
-- [ ] B-034 Подключить production GitHub path: present-day repository discovery → timestamp-verified commit/release/tag → normalized implementation Observation → semantic gate → TrendState.
+- [ ] B-034 Подключить production GitHub path. **Частично готово:** `GitHubAdapter` реализует present-day repository discovery; repo `created_at` хранится только как metadata, `published_at=null`; schema/unit tests green; live CI smoke по `AI agents` собрал 20 валидных Observations. `GitHubHistoryClient` уже даёт timestamp-verified commit/release/tag. **Остался мост:** clustered repository members → history events → embeddings → `gate_historical_vectors()` → accepted implementation evidence → TrendState ingest.
 - [ ] B-031 Проверить false positive: research-only cluster на retrospective/live evidence.
 - [ ] B-033 Проверить profile routing на минимум трёх направлениях: AI agents, neuromorphic computing, solid-state batteries.
 - [ ] B-035 Проверить profile-aware `research → patent/IP → implementation` на representative hardware/materials case; patent не является обязательной ступенью для `software_ai`.
