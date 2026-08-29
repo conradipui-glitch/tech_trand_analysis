@@ -1,9 +1,10 @@
-version: 0.1.0
+version: 0.2.0
 preregistered_at: "2026-08-29"
 notes:
   - "Milestone dates are ecosystem/adoption proxies selected before collecting historical curves; they are not claims that the technology became universally obvious on that exact day."
   - "Validation must preserve raw monthly provider counts and sampled actor evidence. Do not change case dates after seeing score curves without creating a new validation version."
-  - "OpenAlex aggregate counts are research evidence; GitHub repository counts are implementation evidence. Representative items are sampled only for actor/noise inspection."
+  - "v0.2 keeps every original origin/milestone date and query, but adds a conservative sample-based semantic gate after v0.1 demonstrated that provider aggregate keyword counts manufacture pre-origin history."
+  - "OpenAlex/GitHub raw aggregate counts remain audit data. Only cluster-conditioned estimated counts are mapped into TrendState for scoring."
 
 cases:
   - id: rag
@@ -13,6 +14,16 @@ cases:
     openalex_query: "retrieval augmented generation"
     github_query: '"retrieval augmented generation"'
     validation_start: "2019-01-01"
+    semantic_filter:
+      anchor: "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
+      aliases:
+        - "retrieval augmented generation"
+        - "rag"
+      context_terms:
+        - "knowledge"
+        - "language model"
+        - "nlp"
+        - "retrieval"
     origin:
       date: "2020-05-22"
       kind: research
@@ -36,6 +47,18 @@ cases:
     openalex_query: "low rank adaptation large language models"
     github_query: "lora llm"
     validation_start: "2020-01-01"
+    semantic_filter:
+      anchor: "LoRA Low-Rank Adaptation of Large Language Models"
+      aliases:
+        - "low rank adaptation"
+        - "lora"
+      context_terms:
+        - "llm"
+        - "language model"
+        - "fine tuning"
+        - "parameter efficient"
+        - "transformer"
+        - "adapter"
     origin:
       date: "2021-06-17"
       kind: research
