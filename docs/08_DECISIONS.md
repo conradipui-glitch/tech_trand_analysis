@@ -136,3 +136,23 @@ Because detector core requires document↔document cluster geometry across mixed
 Measured GitHub CPU run also showed lower peak RSS and faster corpus encoding for BGE-M3, though slower initial model load. These runtime numbers are environment-specific.
 
 Qwen3 remains a retrieval candidate/fallback; provider abstraction stays mandatory and no BGE-specific assumptions may leak into Observation or TrendState contracts.
+
+## ADR-017 — Conservative profile-aware microclustering before TrendState
+**Status:** Accepted for MVP prototype
+
+B-016 benchmark confirmed that one clustering configuration is not optimal across source profiles. Discovery clustering therefore creates **batch-local microclusters**, while durable identity and temporal consolidation belong to TrendState.
+
+Selected v0 configuration:
+- `software_ai`: hybrid BGE-M3 cosine + TF-IDF, average-link agglomerative, `distance_threshold=0.45`, `dense_alpha=0.90`;
+- `hardware_semiconductor`: BGE-M3 cosine, average-link agglomerative, `distance_threshold=0.40`;
+- `materials_energy`: conservative BGE-M3 cosine agglomerative, `distance_threshold=0.30`, intentionally purity-first;
+- `bio_medtech` and `mixed`: explicit fallback configurations until a labeled corpus exists.
+
+Measured gold-corpus reference points:
+- global hybrid candidate: ARI≈0.842, NMI≈0.940;
+- hardware profile: ARI=NMI=1.0 at threshold 0.40;
+- software profile: ARI≈0.918, NMI≈0.952 at hybrid 0.45/0.90.
+
+The numerical sweep ranked DBSCAN highly for `materials_energy`, but it marked three silicon-anode items as noise and produced one mixed silicon-anode/sodium-ion cluster. That failure mode is worse for trend analytics than over-segmentation because a false merge corrupts `first_seen`, growth and evidence history of two distinct technologies. Therefore the production v0 materials configuration deliberately prefers conservative splitting; TrendState may merge compatible microclusters later using accumulated evidence.
+
+Microcluster IDs are deterministic for the current member set but are **not** long-lived trend IDs. TrendState owns stable trend identity, cross-batch centroid matching, temporal counters and evidence transitions.
