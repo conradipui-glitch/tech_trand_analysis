@@ -1,0 +1,52 @@
+name: embedding-benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/embedding-benchmark.yml"
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - model: Qwen/Qwen3-Embedding-0.6B
+            slug: qwen3-embedding-0.6b
+          - model: BAAI/bge-m3
+            slug: bge-m3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install project and benchmark dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install "sentence-transformers>=5.0,<6" "transformers>=4.51,<5"
+
+      - name: Run benchmark
+        env:
+          TOKENIZERS_PARALLELISM: "false"
+        run: |
+          python scripts/run_embedding_benchmark.py \
+            --model "${{ matrix.model }}" \
+            --output "benchmark-results/${{ matrix.slug }}.json" \
+            --batch-size 16
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: embedding-benchmark-${{ matrix.slug }}
+          path: benchmark-results/${{ matrix.slug }}.json
+          if-no-files-found: error
+          retention-days: 30
