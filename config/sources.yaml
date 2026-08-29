@@ -1,35 +1,145 @@
-# Source registry draft for MVP.
-# Analytics must consume normalized Observation objects, not provider-specific schemas.
+version: 0.2.0
 
-sources:
-  - id: patents
-    enabled: true
-    role: discovery
-    evidence_type: patent
-    adapter: TBD
-    notes: "Choose EPO or another patent API after source-validation spike"
-
-  - id: github
-    enabled: true
-    role: discovery
-    evidence_type: implementation
-    adapter: TBD
-
-  - id: huggingface
-    enabled: conditional
-    condition: "AI-related technology direction"
-    role: discovery
-    evidence_type: implementation
-    adapter: TBD
-
-  - id: openalex
-    enabled: true
-    role: validation_history
+# Source registry + collection routing. `collection_priority` controls what to
+# collect first; it is NOT an Emerging Trend Score weight.
+providers:
+  openalex:
     evidence_type: research
-    adapter: TBD
+    adapter: tech_trend_analysis.sources.openalex.OpenAlexAdapter
+    default_role: discovery_history
 
-  - id: reports
-    enabled: on_demand
-    role: enrichment
+  github:
+    evidence_type: implementation
+    adapter: tech_trend_analysis.sources.github.GitHubAdapter
+    default_role: discovery
+
+  huggingface:
+    evidence_type: implementation
+    adapter: tech_trend_analysis.sources.huggingface.HuggingFaceAdapter
+    default_role: discovery
+
+  epo_ops:
+    evidence_type: patent
+    adapter: tech_trend_analysis.sources.epo_ops.EPOOPSAdapter
+    default_role: discovery
+
+  reports:
     evidence_type: analysis
     adapter: generic_web_or_pdf
+    default_role: enrichment
+
+profiles:
+  software_ai:
+    providers:
+      github:
+        enabled: true
+        role: primary_discovery
+        collection_priority: 1.0
+        query_strategy: software_implementation
+      huggingface:
+        enabled: true
+        role: primary_discovery
+        collection_priority: 0.95
+        query_strategy: ai_artifacts
+      openalex:
+        enabled: true
+        role: validation_history
+        collection_priority: 0.65
+        query_strategy: research_topics
+      epo_ops:
+        enabled: true
+        role: confirmation
+        collection_priority: 0.30
+        query_strategy: patent_keywords
+
+  hardware_semiconductor:
+    providers:
+      epo_ops:
+        enabled: true
+        role: primary_discovery
+        collection_priority: 1.0
+        query_strategy: patent_classification_plus_keywords
+      openalex:
+        enabled: true
+        role: primary_discovery_history
+        collection_priority: 0.95
+        query_strategy: research_topics
+      github:
+        enabled: true
+        role: implementation_confirmation
+        collection_priority: 0.55
+        query_strategy: hardware_implementation
+      huggingface:
+        enabled: true
+        role: optional_ai_artifacts
+        collection_priority: 0.20
+        query_strategy: ai_hardware_artifacts
+
+  materials_energy:
+    providers:
+      epo_ops:
+        enabled: true
+        role: primary_discovery
+        collection_priority: 1.0
+        query_strategy: patent_classification_plus_keywords
+      openalex:
+        enabled: true
+        role: primary_discovery_history
+        collection_priority: 0.95
+        query_strategy: research_topics
+      github:
+        enabled: false
+        role: optional_implementation
+        collection_priority: 0.10
+        query_strategy: implementation_only
+      huggingface:
+        enabled: false
+        role: disabled
+        collection_priority: 0.0
+        query_strategy: none
+
+  bio_medtech:
+    providers:
+      openalex:
+        enabled: true
+        role: primary_discovery_history
+        collection_priority: 1.0
+        query_strategy: research_topics
+      epo_ops:
+        enabled: true
+        role: primary_applied_signal
+        collection_priority: 0.90
+        query_strategy: patent_classification_plus_keywords
+      github:
+        enabled: false
+        role: optional_implementation
+        collection_priority: 0.15
+        query_strategy: implementation_only
+      huggingface:
+        enabled: false
+        role: optional_ai_artifacts
+        collection_priority: 0.10
+        query_strategy: biomedical_ai_only
+
+  mixed:
+    providers:
+      openalex:
+        enabled: true
+        role: broad_discovery_history
+        collection_priority: 0.90
+        query_strategy: research_topics
+      epo_ops:
+        enabled: true
+        role: applied_signal
+        collection_priority: 0.80
+        query_strategy: patent_keywords
+      github:
+        enabled: true
+        role: implementation_signal
+        collection_priority: 0.55
+        query_strategy: broad_implementation
+      huggingface:
+        enabled: true
+        role: optional_ai_artifacts
+        collection_priority: 0.35
+        query_strategy: broad_ai_artifacts
