@@ -11,14 +11,16 @@ GitHub хранит актуальное структурированное со
 Все provider-specific adapters преобразуют вход в универсальный Observation. Analytics layer не знает конкретные provider names.
 
 ## ADR-003 — Minimal high-signal discovery sources
-**Status:** Accepted for MVP hypothesis
+**Status:** Accepted
 
-Не начинать с сотен сайтов и полного научного корпуса. Discovery предпочитает evidence реальной технологической активности: patents, GitHub, Hugging Face Hub для AI.
+Не начинать с сотен сайтов и полного научного корпуса. Initial MVP ограничен четырьмя provider families: EPO OPS, GitHub, Hugging Face Hub, OpenAlex.
 
-## ADR-004 — OpenAlex as validation/history layer
-**Status:** Accepted for MVP hypothesis
+Приоритет источника зависит от типа технологического направления.
 
-OpenAlex используется преимущественно для first seen, publication dynamics и diversity, а не как единственный генератор трендов.
+## ADR-004 — OpenAlex has profile-dependent role
+**Status:** Accepted
+
+OpenAlex используется как discovery + history source для research-heavy направлений и как quantitative/history validation layer для software-heavy направлений. Он не должен единолично генерировать emerging trends.
 
 ## ADR-005 — Reports are enrichment first
 **Status:** Accepted
@@ -53,3 +55,25 @@ Cloudflare рассматривается как основной кандида
 Это не отменяет local-first ML: тяжёлые embeddings/clustering/эксперименты могут выполняться локально или на VPS, а Cloudflare обслуживает публичный сервис и лёгкую оркестрацию. Перед фиксацией production architecture провести отдельный deployment/cost spike.
 
 Секреты Cloudflare никогда не коммитить и не сохранять в проектной документации; использовать Secrets/Bindings/локальные env-файлы вне Git.
+
+## ADR-011 — Profile-aware Source Router
+**Status:** Accepted
+
+До запуска collection пользовательское технологическое направление классифицируется в source profile (`software_ai`, `hardware_semiconductor`, `materials_energy`, `bio_medtech`, `mixed`).
+
+Source Router определяет:
+- какие providers включены;
+- их веса;
+- query-expansion strategy;
+- expected evidence types.
+
+Причина: live source spike показал, что GitHub/Hugging Face дают сильный implementation signal для AI/software, но резко теряют покрытие для material/energy domains. Для последних EPO/OpenAlex должны становиться primary.
+
+Это не меняет source-agnostic analytics core; routing хранится в конфигурации.
+
+## ADR-012 — Patent evidence is strong but lagging
+**Status:** Accepted
+
+Patent signal повышает confidence в переходе технологии к applied/IP activity, но не является обязательным условием emerging trend. Патентная публикация может заметно запаздывать относительно invention/implementation, особенно для быстро развивающегося software/AI.
+
+Поэтому отсутствие патентов не даёт negative penalty молодым software trends; для hardware/materials patent evidence имеет значительно больший вес.
