@@ -13,7 +13,7 @@ import yaml
 from tech_trend_analysis.sources.github_history import GitHubHistoryClient, GitHubHistoryQuery
 
 
-VALIDATION_VERSION = "0.1.0"
+VALIDATION_VERSION = "0.1.1"
 
 
 def parse_args() -> argparse.Namespace:
@@ -98,12 +98,16 @@ def run_case(case: dict[str, Any], *, client: GitHubHistoryClient) -> dict[str, 
         distinctive_terms = tuple(
             str(value) for value in repo_config.get("distinctive_terms", []) if str(value).strip()
         )
+        repo_context_terms = tuple(
+            str(value) for value in repo_config.get("context_terms", []) if str(value).strip()
+        )
+        merged_context_terms = tuple(dict.fromkeys([*context_terms, *repo_context_terms]))
         query = GitHubHistoryQuery(
             repository=repository,
             technology_direction=direction,
             source_profile=profile,
             aliases=aliases,
-            context_terms=context_terms,
+            context_terms=merged_context_terms,
             distinctive_terms=distinctive_terms,
             query_id=f"validation:{case_id}:{repository}",
         )
