@@ -1,0 +1,35 @@
+# Source registry draft for MVP.
+# Analytics must consume normalized Observation objects, not provider-specific schemas.
+
+sources:
+  - id: patents
+    enabled: true
+    role: discovery
+    evidence_type: patent
+    adapter: TBD
+    notes: "Choose EPO or another patent API after source-validation spike"
+
+  - id: github
+    enabled: true
+    role: discovery
+    evidence_type: implementation
+    adapter: TBD
+
+  - id: huggingface
+    enabled: conditional
+    condition: "AI-related technology direction"
+    role: discovery
+    evidence_type: implementation
+    adapter: TBD
+
+  - id: openalex
+    enabled: true
+    role: validation_history
+    evidence_type: research
+    adapter: TBD
+
+  - id: reports
+    enabled: on_demand
+    role: enrichment
+    evidence_type: analysis
+    adapter: generic_web_or_pdf
