@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tech-trend-analysis.local/schemas/trend-result.schema.json",
+  "title": "TrendAnalysisResult",
+  "description": "Machine-readable response for one technology direction.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "request", "summary", "trends"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1.0"},
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["technology_direction", "source_profile", "generated_at", "methodology_version"],
+      "properties": {
+        "technology_direction": {"type": "string", "minLength": 1},
+        "normalized_direction": {"type": ["string", "null"]},
+        "source_profile": {"type": "string"},
+        "generated_at": {"type": "string", "format": "date-time"},
+        "methodology_version": {"type": "string"},
+        "coverage_start": {"type": ["string", "null"], "format": "date"},
+        "coverage_end": {"type": ["string", "null"], "format": "date"}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "trend_count", "candidate_count", "observation_count", "providers_used"],
+      "properties": {
+        "status": {"type": "string", "enum": ["ok", "partial", "insufficient_evidence"]},
+        "trend_count": {"type": "integer", "minimum": 0, "maximum": 15},
+        "candidate_count": {"type": "integer", "minimum": 0},
+        "observation_count": {"type": "integer", "minimum": 0},
+        "providers_used": {"type": "array", "items": {"type": "string"}},
+        "warnings": {"type": "array", "items": {"type": "string"}, "default": []}
+      }
+    },
+    "trends": {
+      "type": "array",
+      "maxItems": 15,
+      "items": {"$ref": "#/$defs/trend"}
+    }
+  },
+  "$defs": {
+    "score_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value"],
+      "properties": {
+        "value": {"type": "number", "minimum": 0, "maximum": 100},
+        "explanation": {"type": ["string", "null"]}
+      }
+    },
+    "time_point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["period", "total"],
+      "properties": {
+        "period": {"type": "string"},
+        "total": {"type": "integer", "minimum": 0},
+        "by_evidence_type": {
+          "type": "object",
+          "additionalProperties": {"type": "integer", "minimum": 0},
+          "default": {}
+        }
+      }
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "evidence_type", "title", "url"],
+      "properties": {
+        "observation_id": {"type": ["string", "null"]},
+        "provider": {"type": "string"},
+        "evidence_type": {"type": "string"},
+        "title": {"type": "string"},
+        "url": {"type": "string", "format": "uri"},
+        "date": {"type": ["string", "null"]},
+        "actor": {"type": ["string", "null"]},
+        "why_representative": {"type": ["string", "null"]}
+      }
+    },
+    "trend": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rank",
+        "trend_id",
+        "name",
+        "description",
+        "score",
+        "first_seen",
+        "motivation",
+        "case_example",
+        "evidence_summary",
+        "trajectory",
+        "representative_sources",
+        "methodology_explanation"
+      ],
+      "properties": {
+        "rank": {"type": "integer", "minimum": 1, "maximum": 15},
+        "trend_id": {"type": "string"},
+        "name": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "stage": {"type": "string", "enum": ["weak_signal", "emerging", "early_adoption", "unknown"]},
+        "score": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["total", "confidence", "components"],
+          "properties": {
+            "total": {"type": "number", "minimum": 0, "maximum": 100},
+            "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+            "components": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "growth": {"$ref": "#/$defs/score_component"},
+                "acceleration": {"$ref": "#/$defs/score_component"},
+                "novelty": {"$ref": "#/$defs/score_component"},
+                "recency": {"$ref": "#/$defs/score_component"},
+                "evidence_diversity": {"$ref": "#/$defs/score_component"},
+                "actor_diversity": {"$ref": "#/$defs/score_component"},
+                "persistence": {"$ref": "#/$defs/score_component"},
+                "maturity_penalty": {"$ref": "#/$defs/score_component"}
+              }
+            }
+          }
+        },
+        "first_seen": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["period", "method", "confidence"],
+          "properties": {
+            "period": {"type": "string"},
+            "method": {"type": "string"},
+            "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "motivation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["problem", "advantage"],
+          "properties": {
+            "problem": {"type": "string"},
+            "advantage": {"type": "string"}
+          }
+        },
+        "case_example": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "kind", "description", "source"],
+          "properties": {
+            "name": {"type": "string"},
+            "kind": {"type": "string", "enum": ["company", "research", "project", "patent", "model", "other"]},
+            "description": {"type": "string"},
+            "source": {"$ref": "#/$defs/source_ref"}
+          }
+        },
+        "evidence_summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["total", "by_type", "actor_count"],
+          "properties": {
+            "total": {"type": "integer", "minimum": 0},
+            "by_type": {
+              "type": "object",
+              "additionalProperties": {"type": "integer", "minimum": 0}
+            },
+            "actor_count": {"type": "integer", "minimum": 0},
+            "country_count": {"type": ["integer", "null"], "minimum": 0}
+          }
+        },
+        "trajectory": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/time_point"}
+        },
+        "representative_sources": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": {"$ref": "#/$defs/source_ref"}
+        },
+        "methodology_explanation": {"type": "string"},
+        "limitations": {"type": "array", "items": {"type": "string"}, "default": []}
+      }
+    }
+  }
+}
