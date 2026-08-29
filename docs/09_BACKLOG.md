@@ -8,6 +8,7 @@
 - [ ] B-004 Провести source validation spike: OpenAlex historical/quantitative queries.
 - [ ] B-005 Уточнить и зафиксировать Observation schema.
 - [ ] B-006 Зафиксировать JSON contract итоговой карточки тренда.
+- [ ] B-007 Провести Cloudflare deployment/cost spike: Workers, D1, R2, Queues/Workflows, Vectorize, Workers AI; определить границу Cloudflare vs local/VPS.
 
 ## NEXT
 
@@ -32,7 +33,7 @@
 
 - [ ] B-050 Targeted report enrichment.
 - [ ] B-051 Company/research case enrichment.
-- [ ] B-052 FastAPI.
+- [ ] B-052 API/runtime deployment после результата Cloudflare spike.
 - [ ] B-053 UI.
 - [ ] B-054 Дополнительные providers.
 - [ ] B-055 Dataset для distillation.
