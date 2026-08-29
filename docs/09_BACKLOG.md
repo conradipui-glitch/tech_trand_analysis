@@ -31,6 +31,7 @@
 
 ## LATER
 
+- [ ] B-008 После проверки возможностей Cloudflare, первого deployment и стартовых тестов отозвать/перевыпустить временные Cloudflare API/R2 credentials, использованные при настройке. Новые credentials хранить только в Cloudflare Secrets/secret manager, не в чате и не в GitHub.
 - [ ] B-050 Targeted report enrichment.
 - [ ] B-051 Company/research case enrichment.
 - [ ] B-052 API/runtime deployment после результата Cloudflare spike.
