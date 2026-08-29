@@ -17,15 +17,15 @@
 - [x] B-015 Benchmark embeddings. Реальные CPU GitHub Actions runs: BGE-M3 выбран primary для clustering; Qwen3-Embedding-0.6B оставлен retrieval/fallback candidate. Raw results persisted in `research/benchmark-results/`.
 - [x] B-016 Prototype clustering на BGE-M3 geometry. Выбран profile-aware conservative microclustering без заранее известного числа кластеров; software=hybrid dense+TF-IDF, hardware=cosine agglomerative, materials=purity-first conservative split. Benchmark + production tests green.
 - [x] B-017 TrendState prototype. Есть long-lived identity, conservative centroid continuation, idempotent rolling re-collection, evidence/provider/actor diversity, first_seen/last_seen, first_evidence_at и monthly buckets; bridge между двумя existing trends fail-closed; CI green.
+- [x] B-018 Adaptive targeted historical backfill. Candidate query строится из реального evidence; profile-aware bounded windows расширяются назад только при left-boundary signal; historical retrieval проходит centroid similarity gate; OpenAlex plan integration + CI tests green.
 - [x] B-020 Реализовать Source Router v0 (`software_ai`, `hardware_semiconductor`, `materials_energy`, `bio_medtech`, `mixed`) + routing tests.
 - [x] B-022 Собрать resumable collection vertical slice: OpenAlex → raw → Observation → checkpoint. Проверено interruption/resume и GitHub Actions CI.
 - [x] B-023 Реализовать durable normalized ObservationStore между dedup и embeddings. Есть Memory + SQLite реализации, upsert/filter contract и CI tests; SQLite schema intentionally D1-friendly.
-- [ ] B-018 Adaptive targeted historical backfill: candidate-specific query descriptor, bounded initial window, backward expansion only when signal touches left boundary, provider-ready plans.
+- [ ] B-019 Emerging Score v0: transparent components, score separate from confidence, growth/acceleration/novelty/recency/diversity/persistence/maturity penalty, profile-aware evidence semantics.
 
 ## NEXT
 
 - [ ] B-009 Получить/настроить EPO OPS developer credentials и выполнить authenticated smoke query; секреты не коммитить.
-- [ ] B-019 Emerging Score v0.
 - [ ] B-021 Live Cloudflare smoke: Worker + D1 + R2 + Workers AI; проверить bindings/deploy, простой end-to-end request и записать результат. После успешного smoke выполнить B-008.
 
 ## VALIDATION
@@ -51,4 +51,4 @@
 - B-021 live Cloudflare smoke требует доступного Cloudflare action/tool или запуска Wrangler/API из среды с внешней сетью.
 - B-009 EPO live smoke требует отдельной EPO OPS регистрации/credentials.
 
-Текущий core pipeline не заблокирован: B-018 backfill строится поверх TrendState и существующих provider adapters.
+Текущий core pipeline не заблокирован: B-019 scoring работает поверх TrendState period/evidence history.
