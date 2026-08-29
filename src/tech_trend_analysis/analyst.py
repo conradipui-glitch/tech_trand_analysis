@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping
 
 import httpx
 
 
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEEPSEEK_ANALYST_MODEL = "deepseek-v4-flash"
+INSUFFICIENT_PROBLEM_EVIDENCE = "Недостаточно подтверждённых данных для вывода о проблеме и преимуществе."
 ANALYST_FIELDS = (
     "human_summary",
     "why_now",
@@ -67,17 +68,37 @@ def source_refs(trend: Mapping[str, Any]) -> set[str]:
     return refs
 
 
+def has_problem_advantage_evidence(trend: Mapping[str, Any]) -> bool:
+    value = trend.get("problem_advantage_evidence")
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, Mapping):
+        return bool(value)
+    if isinstance(value, (list, tuple)):
+        return bool(value)
+    return False
+
+
 def build_messages(trend: Mapping[str, Any]) -> list[dict[str, str]]:
+    problem_supported = has_problem_advantage_evidence(trend)
+    problem_instruction = (
+        "The input contains explicit problem_advantage_evidence. You may summarize only that supplied evidence in problem_advantage. "
+        if problem_supported
+        else f"The input contains NO validated problem/advantage evidence. problem_advantage MUST be exactly: {INSUFFICIENT_PROBLEM_EVIDENCE} "
+    )
     system = (
         "You are the final analyst-editor for an emerging-technology detector. "
         "The detector, not you, has already selected and scored this trend. "
-        "Use ONLY facts present in the supplied JSON. Never invent companies, dates, sources, "
-        "causal claims, market adoption or evidence. Do not change score, confidence, stage, "
-        "ranking or first_seen. If evidence is weak or contradictory, say so explicitly. "
+        "Use ONLY facts present in the supplied JSON. Your general knowledge is forbidden as evidence. "
+        "Never invent companies, dates, sources, technology capabilities, problems solved, advantages, market adoption, causal claims or sector use cases. "
+        "Do not change score, confidence, stage, ranking or first_seen. "
+        "human_summary must summarize the supplied score/metrics/evidence only. "
+        "why_now must refer only to supplied temporal/evidence changes; if they do not support a conclusion, say evidence is insufficient. "
+        + problem_instruction +
+        "caveat must be grounded in supplied limitations/diagnostics. "
+        "what_to_watch_next and analyst_note are forward-looking investigation suggestions or hypotheses, never statements that an event has occurred; analyst_note is not financial advice. "
         "Write concise Russian for a professional bank analytics audience. "
-        "analyst_note is a useful thought or hypothesis to investigate next, not financial advice. "
-        "Return one JSON object with exactly these keys: human_summary, why_now, "
-        "problem_advantage, caveat, what_to_watch_next, analyst_note, used_source_refs. "
+        "Return one JSON object with exactly these keys: human_summary, why_now, problem_advantage, caveat, what_to_watch_next, analyst_note, used_source_refs. "
         "used_source_refs may contain only identifiers or URLs already present in the input."
     )
     user = json.dumps(dict(trend), ensure_ascii=False, separators=(",", ":"))
@@ -91,6 +112,7 @@ def parse_narrative(
     content: str,
     *,
     allowed_source_refs: set[str],
+    problem_advantage_supported: bool = True,
     model: str = DEEPSEEK_ANALYST_MODEL,
 ) -> AnalystNarrative:
     try:
@@ -115,6 +137,12 @@ def parse_narrative(
             raise AnalystError(f"analyst field {key} is empty")
         text_values[key] = value
 
+    # Fail closed on the assignment's most hallucination-prone field. Until a
+    # separate evidence-enrichment stage has supplied explicit problem/advantage
+    # evidence, the public narrative is deterministic rather than model-created.
+    if not problem_advantage_supported:
+        text_values["problem_advantage"] = INSUFFICIENT_PROBLEM_EVIDENCE
+
     return AnalystNarrative(
         **text_values,
         used_source_refs=refs,
@@ -127,6 +155,8 @@ class DeepSeekAnalyst:
 
     This class must never participate in discovery, clustering or TOP-15 ranking.
     It receives an already-scored trend and only produces human-readable narrative.
+    Unsupported problem/advantage claims are replaced with a deterministic
+    insufficient-evidence message until evidence enrichment has run.
     """
 
     def __init__(
@@ -146,6 +176,7 @@ class DeepSeekAnalyst:
 
     def enrich(self, trend: Mapping[str, Any]) -> AnalystNarrative:
         allowed_refs = source_refs(trend)
+        problem_supported = has_problem_advantage_evidence(trend)
         response = httpx.post(
             f"{self.base_url}/chat/completions",
             headers={
@@ -171,5 +202,6 @@ class DeepSeekAnalyst:
         return parse_narrative(
             str(content),
             allowed_source_refs=allowed_refs,
+            problem_advantage_supported=problem_supported,
             model=self.model,
         )
