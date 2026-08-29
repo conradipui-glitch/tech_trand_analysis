@@ -1,0 +1,73 @@
+version: 0.1.0
+
+# Routing priorities only. These are NOT Emerging Trend Score weights.
+# They decide which collectors are active and which evidence is expected.
+
+profiles:
+  software_ai:
+    providers:
+      github: primary
+      huggingface: primary
+      openalex: secondary
+      epo_ops: secondary
+    expected_evidence:
+      - implementation
+      - research
+      - patent
+
+  hardware_semiconductor:
+    providers:
+      epo_ops: primary
+      openalex: primary
+      github: secondary
+      huggingface: disabled
+    expected_evidence:
+      - patent
+      - research
+      - implementation
+
+  materials_energy:
+    providers:
+      epo_ops: primary
+      openalex: primary
+      github: low
+      huggingface: disabled
+    expected_evidence:
+      - patent
+      - research
+
+  bio_medtech:
+    providers:
+      openalex: primary
+      epo_ops: primary
+      github: low
+      huggingface: conditional
+    expected_evidence:
+      - research
+      - patent
+      - implementation
+
+  mixed:
+    providers:
+      github: primary
+      huggingface: conditional
+      openalex: primary
+      epo_ops: primary
+    expected_evidence:
+      - implementation
+      - research
+      - patent
+
+provider_defaults:
+  github:
+    rolling_lookback_days: 2
+    refresh_candidate_metrics_hours: 24
+  huggingface:
+    rolling_lookback_days: 2
+    refresh_candidate_metrics_hours: 24
+  openalex:
+    rolling_lookback_days: 30
+    refresh_candidate_metrics_hours: 168
+  epo_ops:
+    rolling_lookback_days: 14
+    refresh_candidate_metrics_hours: 168
