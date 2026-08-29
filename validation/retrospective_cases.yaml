@@ -1,0 +1,53 @@
+version: 0.1.0
+preregistered_at: "2026-08-29"
+notes:
+  - "Milestone dates are ecosystem/adoption proxies selected before collecting historical curves; they are not claims that the technology became universally obvious on that exact day."
+  - "Validation must preserve raw monthly provider counts and sampled actor evidence. Do not change case dates after seeing score curves without creating a new validation version."
+  - "OpenAlex aggregate counts are research evidence; GitHub repository counts are implementation evidence. Representative items are sampled only for actor/noise inspection."
+
+cases:
+  - id: rag
+    label: "Retrieval-Augmented Generation (RAG)"
+    profile: software_ai
+    technology_direction: "retrieval-augmented generation"
+    openalex_query: '"retrieval augmented generation"'
+    github_query: '"retrieval augmented generation"'
+    validation_start: "2019-01-01"
+    origin:
+      date: "2020-05-22"
+      kind: research
+      title: "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
+      url: "https://arxiv.org/abs/2005.11401"
+    milestone:
+      date: "2023-03-23"
+      kind: implementation_ecosystem_proxy
+      title: "openai/chatgpt-retrieval-plugin repository creation"
+      url: "https://github.com/openai/chatgpt-retrieval-plugin"
+    preregistered_expectation:
+      useful_signal_score: 60
+      useful_signal_confidence: 0.45
+      target_lead_months: 3
+      note: "A useful detector should cross the provisional emerging threshold before the ecosystem milestone, ideally by at least 3 months."
+
+  - id: lora
+    label: "Low-Rank Adaptation (LoRA)"
+    profile: software_ai
+    technology_direction: "low-rank adaptation of large language models"
+    openalex_query: '"low rank adaptation" large language models'
+    github_query: 'lora llm'
+    validation_start: "2020-01-01"
+    origin:
+      date: "2021-06-17"
+      kind: research
+      title: "LoRA: Low-Rank Adaptation of Large Language Models"
+      url: "https://arxiv.org/abs/2106.09685"
+    milestone:
+      date: "2022-11-25"
+      kind: implementation_ecosystem_proxy
+      title: "huggingface/peft repository creation"
+      url: "https://github.com/huggingface/peft"
+    preregistered_expectation:
+      useful_signal_score: 60
+      useful_signal_confidence: 0.45
+      target_lead_months: 3
+      note: "A useful detector should cross the provisional emerging threshold before the PEFT ecosystem milestone, ideally by at least 3 months."
