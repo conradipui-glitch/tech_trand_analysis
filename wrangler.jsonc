@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "tech-trend-analysis",
   "main": "web/worker.js",
-  "compatibility_date": "2026-08-30",
+  "compatibility_date": "2026-08-29",
   "assets": {
     "directory": "./web/public",
     "binding": "ASSETS",
