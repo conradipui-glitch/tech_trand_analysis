@@ -6,6 +6,16 @@
 
 Зрелая популярная технология не должна занимать верх TOP-15 только из-за большого абсолютного числа упоминаний.
 
+## Retrieval != Trend Membership
+
+Поисковый запрос к OpenAlex, GitHub, патентной базе или другому provider — это **retrieval**, а не доказательство принадлежности результата к тренду.
+
+Поэтому aggregate provider count нельзя напрямую записывать в историческую траекторию `TrendState`. Сначала найденные документы должны пройти semantic membership gate относительно уже обнаруженного кластера. Только cluster-conditioned evidence участвует в `first_seen`, growth, acceleration и Emerging Score.
+
+Production targeted backfill использует similarity к centroid `TrendState`. Retrospective calibration v0.2 сохраняет raw provider counts для аудита, но, поскольку материализовать каждый исторический результат дорого, оценивает cluster-conditioned volume по консервативной семантически проверенной выборке. Один совпавший sample никогда не масштабируется до сотен aggregate hits.
+
+Это правило появилось после preregistered RAG/LoRA validation v0.1: broad keyword counts создавали тысячи ложных pre-origin observations и искусственно отодвигали `first_seen` назад.
+
 ## Признаки emerging trend
 
 ### Recency / First Seen
