@@ -32,3 +32,33 @@ jobs:
         run: |
           echo "Operator shell deployed"
           echo "URL=${DEPLOYMENT_URL}"
+      - name: Smoke public shell
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5; do
+            if curl --fail --silent --show-error "${DEPLOYMENT_URL}/api/health" -o /tmp/health.json; then
+              break
+            fi
+            if [ "$attempt" = "5" ]; then
+              echo "Public health endpoint did not become ready" >&2
+              exit 1
+            fi
+            sleep 2
+          done
+          curl --fail --silent --show-error "${DEPLOYMENT_URL}/api/current" -o /tmp/current.json
+          curl --fail --silent --show-error "${DEPLOYMENT_URL}/" -o /tmp/index.html
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          health = json.loads(Path('/tmp/health.json').read_text())
+          current = json.loads(Path('/tmp/current.json').read_text())
+          index = Path('/tmp/index.html').read_text()
+          assert health.get('ok') is True, health
+          assert health.get('service') == 'tech-trend-analysis', health
+          ids = {item['id'] for item in current.get('cases', [])}
+          assert {'rag', 'lora'} <= ids, current
+          assert 'Радар зарождающихся технологий' in index, 'operator shell title missing'
+          print('Public smoke OK:', health['service'], sorted(ids))
+          PY
