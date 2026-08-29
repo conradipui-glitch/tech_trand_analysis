@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import AgglomerativeClustering, DBSCAN
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import (
     adjusted_rand_score,
     completeness_score,
@@ -21,6 +22,7 @@ from tech_trend_analysis.evaluation import load_benchmark_dataset
 
 
 THRESHOLDS = [round(value, 3) for value in np.arange(0.05, 0.651, 0.025)]
+HYBRID_ALPHAS = (0.80, 0.90, 0.95)
 
 
 def evaluate(true_labels, predicted_labels, *, algorithm: str, params: dict):
@@ -36,6 +38,7 @@ def evaluate(true_labels, predicted_labels, *, algorithm: str, params: dict):
         "homogeneity": homogeneity_score(true_labels, predicted_labels),
         "completeness": completeness_score(true_labels, predicted_labels),
         "v_measure": v_measure_score(true_labels, predicted_labels),
+        "purity_weighted_v": v_measure_score(true_labels, predicted_labels, beta=0.5),
         "cluster_count": cluster_count,
         "noise_count": noise_count,
         "singleton_count": singleton_count,
@@ -43,7 +46,11 @@ def evaluate(true_labels, predicted_labels, *, algorithm: str, params: dict):
 
 
 def ranking_key(row, true_cluster_count: int):
+    # False merges are more damaging than temporary over-segmentation for an
+    # emerging-trend detector, so the beta=0.5 V-measure slightly favors
+    # homogeneity while still penalizing a forest of singletons.
     return (
+        row["purity_weighted_v"],
         row["ari"],
         row["v_measure"],
         -abs(row["cluster_count"] - true_cluster_count),
@@ -52,7 +59,30 @@ def ranking_key(row, true_cluster_count: int):
     )
 
 
-def run_algorithm(vectors, algorithm: str, params: dict):
+def dense_distance(vectors):
+    similarity = np.clip(vectors @ vectors.T, -1.0, 1.0)
+    distance = 1.0 - similarity
+    np.fill_diagonal(distance, 0.0)
+    return distance
+
+
+def hybrid_distance(vectors, texts, alpha: float):
+    tfidf = TfidfVectorizer(
+        lowercase=True,
+        ngram_range=(1, 2),
+        sublinear_tf=True,
+        norm="l2",
+    ).fit_transform(texts)
+    lexical_similarity = (tfidf @ tfidf.T).toarray()
+    dense_similarity = np.clip(vectors @ vectors.T, -1.0, 1.0)
+    similarity = alpha * dense_similarity + (1.0 - alpha) * lexical_similarity
+    distance = 1.0 - similarity
+    distance = np.clip(distance, 0.0, 2.0)
+    np.fill_diagonal(distance, 0.0)
+    return distance
+
+
+def run_algorithm(vectors, texts, algorithm: str, params: dict):
     if algorithm == "agglomerative_average_cosine":
         return AgglomerativeClustering(
             n_clusters=None,
@@ -61,6 +91,15 @@ def run_algorithm(vectors, algorithm: str, params: dict):
             distance_threshold=float(params["distance_threshold"]),
             compute_full_tree=True,
         ).fit_predict(vectors)
+    if algorithm == "agglomerative_hybrid_dense_tfidf":
+        distance = hybrid_distance(vectors, texts, float(params["dense_alpha"]))
+        return AgglomerativeClustering(
+            n_clusters=None,
+            metric="precomputed",
+            linkage="average",
+            distance_threshold=float(params["distance_threshold"]),
+            compute_full_tree=True,
+        ).fit_predict(distance)
     if algorithm == "dbscan_cosine":
         return DBSCAN(
             eps=float(params["eps"]),
@@ -70,11 +109,11 @@ def run_algorithm(vectors, algorithm: str, params: dict):
     raise ValueError(f"unknown algorithm: {algorithm}")
 
 
-def sweep(vectors, true_labels):
+def sweep(vectors, texts, true_labels):
     results = []
     for threshold in THRESHOLDS:
         params = {"distance_threshold": float(threshold)}
-        labels = run_algorithm(vectors, "agglomerative_average_cosine", params)
+        labels = run_algorithm(vectors, texts, "agglomerative_average_cosine", params)
         results.append(
             evaluate(
                 true_labels,
@@ -84,10 +123,31 @@ def sweep(vectors, true_labels):
             )
         )
 
+    for alpha in HYBRID_ALPHAS:
+        for threshold in THRESHOLDS:
+            params = {
+                "distance_threshold": float(threshold),
+                "dense_alpha": float(alpha),
+            }
+            labels = run_algorithm(
+                vectors,
+                texts,
+                "agglomerative_hybrid_dense_tfidf",
+                params,
+            )
+            results.append(
+                evaluate(
+                    true_labels,
+                    labels,
+                    algorithm="agglomerative_hybrid_dense_tfidf",
+                    params=params,
+                )
+            )
+
     for eps in THRESHOLDS:
         for min_samples in (2, 3):
             params = {"eps": float(eps), "min_samples": min_samples}
-            labels = run_algorithm(vectors, "dbscan_cosine", params)
+            labels = run_algorithm(vectors, texts, "dbscan_cosine", params)
             results.append(
                 evaluate(
                     true_labels,
@@ -120,9 +180,10 @@ def benchmark_subset(rows, vectors):
     cluster_names = sorted({row["cluster"] for row in rows})
     cluster_to_id = {name: idx for idx, name in enumerate(cluster_names)}
     true_labels = np.array([cluster_to_id[row["cluster"]] for row in rows])
-    ranked, results = sweep(vectors, true_labels)
+    texts = [row["text"] for row in rows]
+    ranked, results = sweep(vectors, texts, true_labels)
     best = dict(ranked[0])
-    best_labels = run_algorithm(vectors, best["algorithm"], best["params"])
+    best_labels = run_algorithm(vectors, texts, best["algorithm"], best["params"])
     best["composition"] = cluster_composition(rows, best_labels)
     return {
         "document_count": len(rows),
