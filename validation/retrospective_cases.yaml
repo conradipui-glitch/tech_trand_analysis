@@ -1,10 +1,11 @@
-version: 0.2.0
+version: 0.3.0
 preregistered_at: "2026-08-29"
 notes:
   - "Milestone dates are ecosystem/adoption proxies selected before collecting historical curves; they are not claims that the technology became universally obvious on that exact day."
   - "Validation must preserve raw monthly provider counts and sampled actor evidence. Do not change case dates after seeing score curves without creating a new validation version."
-  - "v0.2 keeps every original origin/milestone date and query, but adds a conservative sample-based semantic gate after v0.1 demonstrated that provider aggregate keyword counts manufacture pre-origin history."
-  - "OpenAlex/GitHub raw aggregate counts remain audit data. Only cluster-conditioned estimated counts are mapped into TrendState for scoring."
+  - "v0.2 added conservative sample-based semantic gating after v0.1 showed that aggregate keyword counts manufacture pre-origin history."
+  - "v0.3 keeps every original origin/milestone date and query, strengthens alias/context disambiguation, and excludes current GitHub repository metadata from historical scoring because current name/description can leak future terminology backward to repository created_at."
+  - "OpenAlex publication history remains eligible after semantic gating. GitHub implementation history requires a timestamp-verified relevant commit/release/tag and is calibrated separately in B-032."
 
 cases:
   - id: rag
