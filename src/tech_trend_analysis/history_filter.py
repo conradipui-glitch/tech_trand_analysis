@@ -50,26 +50,32 @@ def gate_sampled_count(
     context_terms: Sequence[str] = (),
     min_similarity: float = 0.16,
     min_anchor_coverage: float = 0.34,
+    strong_similarity: float = 0.42,
+    strong_anchor_coverage: float = 0.67,
 ) -> SampleGateResult:
     """Estimate cluster-conditioned provider volume from representative samples.
 
     Provider search counts are retrieval volume, not proof that every result belongs
-    to the semantic trend cluster. The production backfill path has a vector/centroid
-    gate; retrospective validation cannot afford to materialize every historical
-    provider result, so it audits a representative sample and scales aggregate counts
-    only when at least two sampled results pass a conservative semantic proxy gate.
+    to the semantic trend cluster. Production backfill uses vector-to-centroid
+    membership. Retrospective validation uses this conservative proxy because it
+    cannot materialize every historical result.
 
-    Raw counts are always preserved separately by the caller. A single sampled match
-    is never amplified to the full provider aggregate: it contributes at most one
-    observation. This deliberately prefers false negatives to manufactured pre-origin
-    history during calibration.
+    When aliases are configured, a normal acceptance requires a discriminative alias
+    plus configured domain context. This is important for ambiguous terms such as
+    LoRA/LoRa and generic phrases such as "low rank adaptation". A result without an
+    alias may pass only when both semantic similarity and anchor-term coverage are
+    exceptionally strong. One sampled match is never amplified to the provider total.
     """
     if raw_count < 0:
         raise ValueError("raw_count must be >= 0")
-    if not 0 <= min_similarity <= 1:
-        raise ValueError("min_similarity must be in [0, 1]")
-    if not 0 <= min_anchor_coverage <= 1:
-        raise ValueError("min_anchor_coverage must be in [0, 1]")
+    for name, value in (
+        ("min_similarity", min_similarity),
+        ("min_anchor_coverage", min_anchor_coverage),
+        ("strong_similarity", strong_similarity),
+        ("strong_anchor_coverage", strong_anchor_coverage),
+    ):
+        if not 0 <= value <= 1:
+            raise ValueError(f"{name} must be in [0, 1]")
 
     texts = [str(value or "").strip() for value in sample_texts]
     if raw_count == 0 or not texts:
@@ -99,6 +105,7 @@ def gate_sampled_count(
     coverages: list[float] = []
     for index, (text, raw_similarity) in enumerate(zip(texts, similarities, strict=True)):
         normalized_text = _normalize_phrase(text)
+        text_tokens = set(normalized_text.split())
         sample_terms = _key_terms(text)
         coverage = (
             len(anchor_terms.intersection(sample_terms)) / len(anchor_terms)
@@ -108,14 +115,25 @@ def gate_sampled_count(
         coverages.append(coverage)
 
         phrase_hit = any(" " in alias and alias in normalized_text for alias in normalized_aliases)
-        short_alias_hit = any(
-            " " not in alias and alias in set(normalized_text.split())
-            for alias in normalized_aliases
-        )
-        context_hit = any(term in normalized_text for term in normalized_context)
-        semantic_hit = float(raw_similarity) >= min_similarity and coverage >= min_anchor_coverage
+        short_alias_hit = any(" " not in alias and alias in text_tokens for alias in normalized_aliases)
+        context_hit = not normalized_context or any(term in normalized_text for term in normalized_context)
+        alias_hit = (phrase_hit or short_alias_hit) and context_hit
 
-        if phrase_hit or semantic_hit or (short_alias_hit and context_hit):
+        ordinary_semantic_hit = (
+            float(raw_similarity) >= min_similarity
+            and coverage >= min_anchor_coverage
+        )
+        strong_semantic_hit = (
+            float(raw_similarity) >= strong_similarity
+            and coverage >= strong_anchor_coverage
+        )
+
+        if normalized_aliases:
+            accepted_result = alias_hit or strong_semantic_hit
+        else:
+            accepted_result = ordinary_semantic_hit
+
+        if accepted_result:
             accepted.append(index)
 
     matched = len(accepted)
@@ -127,8 +145,6 @@ def gate_sampled_count(
     elif raw_count <= sample_count:
         estimated = min(raw_count, matched)
     elif matched == 1:
-        # Do not let one possibly noisy representative result manufacture hundreds
-        # of historical observations from an aggregate keyword count.
         estimated = 1
     else:
         estimated = max(matched, int(round(raw_count * precision)))
