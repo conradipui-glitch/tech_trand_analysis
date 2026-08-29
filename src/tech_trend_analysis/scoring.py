@@ -24,6 +24,7 @@ COMPONENT_WEIGHTS: dict[str, float] = {
 
 # Maturity is a subtractive term rather than a positive weighted component.
 MAX_MATURITY_PENALTY_POINTS = 30.0
+DYNAMIC_PRIOR = 25.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,10 +105,7 @@ class EmergingScorer:
         evidence = _evidence_component(state)
         actors = _actor_component(state.actor_diversity)
         recency = _recency_component(inactivity_months)
-        persistence = _persistence_component(
-            counts,
-            age_months=age_months,
-        )
+        persistence = _persistence_component(counts, age_months=age_months)
         maturity = _maturity_component(state, age_months=age_months)
 
         positive_components = {
@@ -147,15 +145,16 @@ def _growth_component(counts: list[int]) -> ScoreComponent:
     recent = float(np.mean(counts[-3:]))
     previous = float(np.mean(counts[-6:-3]))
     ratio = (recent + 0.5) / (previous + 0.5)
-    value = _clamp(50.0 + 25.0 * math.log2(ratio), 0.0, 100.0)
+    raw_value = _clamp(50.0 + 25.0 * math.log2(ratio), 0.0, 100.0)
     observed_months = sum(1 for value_ in counts[-6:] if value_ > 0)
     reliability = min(1.0, observed_months / 4.0)
+    value = _shrink_to_prior(raw_value, reliability)
     return ScoreComponent(
         value=value,
         reliability=reliability,
         explanation=(
             f"Recent 3-month mean={recent:.2f}, previous 3-month mean={previous:.2f}; "
-            "log-ratio is mapped to 0-100."
+            f"raw growth={raw_value:.1f}, reliability={reliability:.2f}, sparse history shrinks toward {DYNAMIC_PRIOR:.0f}."
         ),
     )
 
@@ -166,15 +165,16 @@ def _acceleration_component(counts: list[int]) -> ScoreComponent:
     previous_velocity = _normalized_slope(previous)
     recent_velocity = _normalized_slope(recent)
     delta = recent_velocity - previous_velocity
-    value = _clamp(50.0 + 50.0 * math.tanh(delta * 2.0), 0.0, 100.0)
+    raw_value = _clamp(50.0 + 50.0 * math.tanh(delta * 2.0), 0.0, 100.0)
     active = sum(1 for value_ in counts[-6:] if value_ > 0)
     reliability = min(1.0, active / 5.0)
+    value = _shrink_to_prior(raw_value, reliability)
     return ScoreComponent(
         value=value,
         reliability=reliability,
         explanation=(
             f"Normalized recent velocity={recent_velocity:.3f}, previous velocity={previous_velocity:.3f}; "
-            f"delta={delta:.3f}."
+            f"delta={delta:.3f}, raw acceleration={raw_value:.1f}, reliability={reliability:.2f}."
         ),
     )
 
@@ -244,13 +244,15 @@ def _persistence_component(counts: list[int], *, age_months: int) -> ScoreCompon
     longest = _longest_positive_run(window)
     active_ratio = active / available
     run_ratio = min(1.0, longest / min(3, available))
-    value = 70.0 * active_ratio + 30.0 * run_ratio
+    raw_value = 70.0 * active_ratio + 30.0 * run_ratio
+    reliability = min(1.0, available / 4.0)
+    value = _shrink_to_prior(raw_value, reliability)
     return ScoreComponent(
         value=_clamp(value, 0.0, 100.0),
-        reliability=min(1.0, available / 4.0),
+        reliability=reliability,
         explanation=(
             f"Active months={active}/{available} in recent available window; "
-            f"longest consecutive active run={longest}."
+            f"longest consecutive active run={longest}; raw persistence={raw_value:.1f}, reliability={reliability:.2f}."
         ),
     )
 
@@ -389,6 +391,14 @@ def _parse_date(value: str) -> date:
     if "T" not in raw:
         return date.fromisoformat(raw)
     return datetime.fromisoformat(raw).date()
+
+
+def _shrink_to_prior(value: float, reliability: float) -> float:
+    return _clamp(
+        reliability * value + (1.0 - reliability) * DYNAMIC_PRIOR,
+        0.0,
+        100.0,
+    )
 
 
 def _clamp(value: float, lower: float, upper: float) -> float:
