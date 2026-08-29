@@ -10,7 +10,15 @@ requires-python = ">=3.11"
 dependencies = [
   "httpx>=0.28,<1",
   "jsonschema>=4.23,<5",
-  "PyYAML>=6.0,<7"
+  "PyYAML>=6.0,<7",
+  "numpy>=1.26,<3",
+  "scikit-learn>=1.5,<2"
+]
+
+[project.optional-dependencies]
+embeddings = [
+  "sentence-transformers>=5.0,<6",
+  "transformers>=4.51,<5"
 ]
 
 [tool.setuptools.packages.find]
