@@ -8,45 +8,47 @@
 - [x] B-004 Провести source validation spike: OpenAlex historical/quantitative queries.
 - [x] B-005 Уточнить и зафиксировать Observation schema с учётом Source Router и provider-specific metrics. Закрыто schema v0.2.0 + fixtures + contract tests.
 - [x] B-006 Зафиксировать JSON contract итоговой карточки тренда. Закрыто `trend-result.schema.json` v0.2.0 + fixture.
-- [x] B-007 Провести Cloudflare capability/cost spike: Workers, D1, R2, Queues/Workflows, Vectorize, Workers AI, AI Gateway. Принят hybrid runtime ADR-014; live smoke вынесен в B-021.
+- [x] B-007 Провести Cloudflare capability/cost spike. Принят hybrid runtime ADR-014.
 - [x] B-010 Реализовать первый adapter: OpenAlex. Есть retry/cursor pagination/mapping в Observation v0.2.0 + tests.
 - [x] B-011 Реализовать incremental checkpoints. Есть Memory/File stores + atomic local persistence + tests.
 - [x] B-012 Реализовать raw buffer. Есть JSONL.gz sink с R2-compatible key layout + tests.
 - [x] B-013 Реализовать exact/fuzzy dedup. Exact DOI/URL/provider IDs + conservative title fuzzy; research/implementation evidence не схлопываются; tests green.
 - [x] B-014 Собрать evaluation corpus. v0: 48 passages / 12 clusters / 3 profiles / RU+EN, 24 retrieval queries, 24 pair cases, explicit hard negatives; corpus validation green in CI.
-- [x] B-015 Benchmark embeddings. Реальные CPU GitHub Actions runs: BGE-M3 выбран primary для clustering; Qwen3-Embedding-0.6B оставлен retrieval/fallback candidate. Raw results persisted in `research/benchmark-results/`.
-- [x] B-016 Prototype clustering на BGE-M3 geometry. Выбран profile-aware conservative microclustering без заранее известного числа кластеров; software=hybrid dense+TF-IDF, hardware=cosine agglomerative, materials=purity-first conservative split. Benchmark + production tests green.
-- [x] B-017 TrendState prototype. Есть long-lived identity, conservative centroid continuation, idempotent rolling re-collection, evidence/provider/actor diversity, first_seen/last_seen, first_evidence_at и monthly buckets; bridge между двумя existing trends fail-closed; CI green.
-- [x] B-018 Adaptive targeted historical backfill. Candidate query строится из реального evidence; profile-aware bounded windows расширяются назад только при left-boundary signal; historical retrieval проходит centroid similarity gate; OpenAlex plan integration + CI tests green.
-- [x] B-019 Emerging Score v0. Transparent score + confidence, sparse-history shrinkage, profile-aware evidence semantics and maturity penalty; synthetic false-positive/maturity/decline guards green in CI. Weights are provisional until B-030.
+- [x] B-015 Benchmark embeddings. BGE-M3 выбран primary для clustering; Qwen3-Embedding-0.6B оставлен retrieval/fallback candidate.
+- [x] B-016 Prototype clustering на BGE-M3 geometry. Profile-aware conservative microclustering; benchmark + production tests green.
+- [x] B-017 TrendState prototype. Long-lived identity, centroid continuation, idempotent rolling collection, evidence/provider/actor diversity, first_seen/last_seen, monthly buckets; CI green.
+- [x] B-018 Adaptive targeted historical backfill. Candidate queries + bounded windows + centroid similarity gate; CI green.
+- [x] B-019 Emerging Score v0. Transparent score + confidence, sparse-history shrinkage, profile-aware evidence semantics and maturity penalty; guard tests green. Weights provisional until retrospective calibration.
 - [x] B-020 Реализовать Source Router v0 (`software_ai`, `hardware_semiconductor`, `materials_energy`, `bio_medtech`, `mixed`) + routing tests.
-- [x] B-022 Собрать resumable collection vertical slice: OpenAlex → raw → Observation → checkpoint. Проверено interruption/resume и GitHub Actions CI.
-- [x] B-023 Реализовать durable normalized ObservationStore между dedup и embeddings. Есть Memory + SQLite реализации, upsert/filter contract и CI tests; SQLite schema intentionally D1-friendly.
-- [ ] B-030 Retrospective validation на нескольких известных emerging technologies: реальные исторические source curves + заранее зафиксированные milestone/cutoff даты; проверить, появился бы полезный signal до широкой очевидности.
+- [x] B-022 Собрать resumable collection vertical slice: OpenAlex → raw → Observation → checkpoint.
+- [x] B-023 Реализовать durable normalized ObservationStore. Memory + SQLite, D1-friendly schema.
+- [x] B-025 Thin operator web shell на Cloudflare Workers + Static Assets. Live deploy + external public smoke green: HTML, `/api/health`, `/api/current`, RAG/LoRA snapshots.
+- [x] B-026 Grounded DeepSeek analyst layer через GitHub Actions secret `DEEPSEEK_API_KEY`. DeepSeek не участвует в discovery/ranking; citations constrained to input; unsupported problem/advantage claims fail-closed; live smoke green.
+- [ ] B-030 Retrospective validation/calibration. Первый preregistered RAG/LoRA run завершён и обнаружил methodological failure: broad keyword retrieval даёт большие pre-origin counts. Исправить history на semantic cluster-conditioned filtering и повторить те же preregistered cases без изменения milestone дат.
 
 ## NEXT
 
+- [ ] B-024 TOP-15 ranking + `TrendAnalysisResult` assembler после исправления retrospective history.
+- [ ] B-027 Подключить vetted DeepSeek narrative к опубликованному TOP-candidate snapshot после assembler; хранить enrichment как производный слой, не как evidence.
 - [ ] B-031 Проверить false positive: research-only cluster на retrospective/live evidence.
 - [ ] B-032 Проверить transition research → patent → implementation.
 - [ ] B-033 Проверить profile routing на минимум трёх направлениях: AI agents, neuromorphic computing, solid-state batteries.
 - [ ] B-009 Получить/настроить EPO OPS developer credentials и выполнить authenticated smoke query; секреты не коммитить.
-- [ ] B-021 Live Cloudflare smoke: Worker + D1 + R2 + Workers AI; проверить bindings/deploy, простой end-to-end request и записать результат. После успешного smoke выполнить B-008.
+- [ ] B-021 Продолжить Cloudflare live capability smoke: Worker/public shell уже проверены; остаются D1 + R2 + Workers AI bindings и минимальный end-to-end data write/read/inference test. Только после полного smoke выполнить B-008.
 
 ## LATER
 
-- [ ] B-008 После проверки возможностей Cloudflare, первого deployment и стартовых тестов отозвать/перевыпустить временные Cloudflare API/R2 credentials, использованные при настройке. Новые credentials хранить только в Cloudflare Secrets/secret manager, не в чате и не в GitHub.
-- [ ] B-024 TOP-15 ranking + `TrendAnalysisResult` assembler после retrospective calibration.
+- [ ] B-008 После полной проверки Cloudflare возможностей, первого deployment и стартовых тестов отозвать/перевыпустить временные Cloudflare API/R2 credentials, использованные при настройке. Новые credentials хранить только в Cloudflare/GitHub Secrets или другом secret manager, не в чате и не в Git.
 - [ ] B-050 Targeted report enrichment.
 - [ ] B-051 Company/research case enrichment.
-- [ ] B-052 Полный API/runtime deployment после detector vertical slice.
-- [ ] B-053 UI.
+- [ ] B-052 Полный API/runtime deployment detector jobs после vertical slice.
+- [ ] B-053 Final product UI polish поверх уже работающего operator shell.
 - [ ] B-054 Дополнительные providers.
 - [ ] B-055 Dataset для distillation.
 - [ ] B-056 Оценить R2 Data Catalog/R2 SQL после появления реального Parquet/Iceberg workload.
 
 ## BLOCKED
 
-- B-021 live Cloudflare smoke требует доступного Cloudflare action/tool или запуска Wrangler/API из среды с внешней сетью.
 - B-009 EPO live smoke требует отдельной EPO OPS регистрации/credentials.
 
-Текущий detector core не заблокирован: Phase 10 retrospective validation можно выполнять на OpenAlex/GitHub public evidence, а EPO подключить как отдельный слой после credentials.
+Текущий detector core и web shell не заблокированы. Cloudflare Worker deployment и публичный smoke работают через GitHub Actions; D1/R2/Workers AI capability smoke остаётся отдельной инфраструктурной задачей.
