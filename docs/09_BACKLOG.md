@@ -18,26 +18,24 @@
 - [x] B-016 Prototype clustering на BGE-M3 geometry. Выбран profile-aware conservative microclustering без заранее известного числа кластеров; software=hybrid dense+TF-IDF, hardware=cosine agglomerative, materials=purity-first conservative split. Benchmark + production tests green.
 - [x] B-017 TrendState prototype. Есть long-lived identity, conservative centroid continuation, idempotent rolling re-collection, evidence/provider/actor diversity, first_seen/last_seen, first_evidence_at и monthly buckets; bridge между двумя existing trends fail-closed; CI green.
 - [x] B-018 Adaptive targeted historical backfill. Candidate query строится из реального evidence; profile-aware bounded windows расширяются назад только при left-boundary signal; historical retrieval проходит centroid similarity gate; OpenAlex plan integration + CI tests green.
+- [x] B-019 Emerging Score v0. Transparent score + confidence, sparse-history shrinkage, profile-aware evidence semantics and maturity penalty; synthetic false-positive/maturity/decline guards green in CI. Weights are provisional until B-030.
 - [x] B-020 Реализовать Source Router v0 (`software_ai`, `hardware_semiconductor`, `materials_energy`, `bio_medtech`, `mixed`) + routing tests.
 - [x] B-022 Собрать resumable collection vertical slice: OpenAlex → raw → Observation → checkpoint. Проверено interruption/resume и GitHub Actions CI.
 - [x] B-023 Реализовать durable normalized ObservationStore между dedup и embeddings. Есть Memory + SQLite реализации, upsert/filter contract и CI tests; SQLite schema intentionally D1-friendly.
-- [ ] B-019 Emerging Score v0: transparent components, score separate from confidence, growth/acceleration/novelty/recency/diversity/persistence/maturity penalty, profile-aware evidence semantics.
+- [ ] B-030 Retrospective validation на нескольких известных emerging technologies: реальные исторические source curves + заранее зафиксированные milestone/cutoff даты; проверить, появился бы полезный signal до широкой очевидности.
 
 ## NEXT
 
-- [ ] B-009 Получить/настроить EPO OPS developer credentials и выполнить authenticated smoke query; секреты не коммитить.
-- [ ] B-021 Live Cloudflare smoke: Worker + D1 + R2 + Workers AI; проверить bindings/deploy, простой end-to-end request и записать результат. После успешного smoke выполнить B-008.
-
-## VALIDATION
-
-- [ ] B-030 Retrospective test на нескольких известных emerging technologies.
-- [ ] B-031 Проверить false positive: research-only cluster.
+- [ ] B-031 Проверить false positive: research-only cluster на retrospective/live evidence.
 - [ ] B-032 Проверить transition research → patent → implementation.
 - [ ] B-033 Проверить profile routing на минимум трёх направлениях: AI agents, neuromorphic computing, solid-state batteries.
+- [ ] B-009 Получить/настроить EPO OPS developer credentials и выполнить authenticated smoke query; секреты не коммитить.
+- [ ] B-021 Live Cloudflare smoke: Worker + D1 + R2 + Workers AI; проверить bindings/deploy, простой end-to-end request и записать результат. После успешного smoke выполнить B-008.
 
 ## LATER
 
 - [ ] B-008 После проверки возможностей Cloudflare, первого deployment и стартовых тестов отозвать/перевыпустить временные Cloudflare API/R2 credentials, использованные при настройке. Новые credentials хранить только в Cloudflare Secrets/secret manager, не в чате и не в GitHub.
+- [ ] B-024 TOP-15 ranking + `TrendAnalysisResult` assembler после retrospective calibration.
 - [ ] B-050 Targeted report enrichment.
 - [ ] B-051 Company/research case enrichment.
 - [ ] B-052 Полный API/runtime deployment после detector vertical slice.
@@ -51,4 +49,4 @@
 - B-021 live Cloudflare smoke требует доступного Cloudflare action/tool или запуска Wrangler/API из среды с внешней сетью.
 - B-009 EPO live smoke требует отдельной EPO OPS регистрации/credentials.
 
-Текущий core pipeline не заблокирован: B-019 scoring работает поверх TrendState period/evidence history.
+Текущий detector core не заблокирован: Phase 10 retrospective validation можно выполнять на OpenAlex/GitHub public evidence, а EPO подключить как отдельный слой после credentials.
