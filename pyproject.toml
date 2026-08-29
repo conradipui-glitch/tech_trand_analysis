@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tech-trend-analysis"
+version = "0.1.0"
+description = "Emerging scientific and technology trend detector MVP"
+requires-python = ">=3.11"
+dependencies = [
+  "httpx>=0.28,<1",
+  "jsonschema>=4.23,<5"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
