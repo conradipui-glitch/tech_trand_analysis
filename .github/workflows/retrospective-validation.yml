@@ -5,9 +5,9 @@ on:
   push:
     paths:
       - validation/retrospective_cases.yaml
-      - scripts/run_retrospective_validation.py
-      - scripts/run_retrospective_validation_v03.py
+      - scripts/run_retrospective_calibration.py
       - src/tech_trend_analysis/history_filter.py
+      - src/tech_trend_analysis/scoring.py
       - .github/workflows/retrospective-validation.yml
 
 permissions:
@@ -17,8 +17,6 @@ jobs:
   validate:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    env:
-      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,16 +27,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e .
-      - name: Run retrospective validation v0.3
+      - name: Run targeted retrospective calibration v0.4
         run: |
-          python scripts/run_retrospective_validation_v03.py \
+          python scripts/run_retrospective_calibration.py \
             --cases validation/retrospective_cases.yaml \
-            --output validation/results/retrospective-v0.3.json \
-            --sample-size 10
+            --output validation/results/retrospective-v0.4.json \
+            --sample-size 20
       - name: Upload validation result
         uses: actions/upload-artifact@v4
         with:
-          name: retrospective-validation-v0.3
-          path: validation/results/retrospective-v0.3.json
+          name: retrospective-validation-v0.4
+          path: validation/results/retrospective-v0.4.json
           if-no-files-found: error
           retention-days: 30
