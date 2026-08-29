@@ -44,3 +44,12 @@ Embeddings, reranking, clustering и математика должны имет�
 **Status:** Accepted
 
 Сначала добиться качественного TOP-15 в JSON с evidence и метриками; затем строить UI.
+
+## ADR-010 — Cloudflare as candidate MVP runtime
+**Status:** Accepted for spike
+
+Cloudflare рассматривается как основной кандидат для публичного runtime MVP: Workers для API/cron/orchestration, D1 для компактного operational state, R2 для raw/Parquet/evidence, Queues/Workflows для фоновой обработки, Vectorize как возможный managed ANN layer и Workers AI как дополнительный inference provider.
+
+Это не отменяет local-first ML: тяжёлые embeddings/clustering/эксперименты могут выполняться локально или на VPS, а Cloudflare обслуживает публичный сервис и лёгкую оркестрацию. Перед фиксацией production architecture провести отдельный deployment/cost spike.
+
+Секреты Cloudflare никогда не коммитить и не сохранять в проектной документации; использовать Secrets/Bindings/локальные env-файлы вне Git.
