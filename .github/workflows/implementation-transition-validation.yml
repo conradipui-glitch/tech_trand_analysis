@@ -1,0 +1,42 @@
+name: implementation-transition-validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - validation/retrospective_cases.yaml
+      - scripts/run_implementation_transition_validation.py
+      - src/tech_trend_analysis/sources/github_history.py
+      - .github/workflows/implementation-transition-validation.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+      - name: Validate implementation transitions
+        run: |
+          python scripts/run_implementation_transition_validation.py \
+            --cases validation/retrospective_cases.yaml \
+            --output validation/results/implementation-transition-v0.1.json
+      - name: Upload validation result
+        uses: actions/upload-artifact@v4
+        with:
+          name: implementation-transition-v0.1
+          path: validation/results/implementation-transition-v0.1.json
+          if-no-files-found: error
+          retention-days: 30
