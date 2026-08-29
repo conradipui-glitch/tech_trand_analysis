@@ -25,14 +25,16 @@
 - [x] B-024 TOP-15 ranking + `TrendAnalysisResult` assembler. Deterministic ranking из уже обнаруженных TrendState; максимум 15, без LLM padding; кандидаты без grounded source fail-closed; schema contract tests green.
 - [x] B-025 Thin operator web shell на Cloudflare Workers + Static Assets. Live deploy + external public smoke green: HTML, `/api/health`, `/api/current`, RAG/LoRA snapshots.
 - [x] B-026 Grounded DeepSeek analyst layer через GitHub Actions secret `DEEPSEEK_API_KEY`. DeepSeek не участвует в discovery/ranking; citations constrained to input; unsupported problem/advantage claims fail-closed; live smoke green.
-- [ ] B-030 Retrospective validation/calibration. v0.1 обнаружил methodological failure: broad keyword retrieval давал большие pre-origin counts. v0.2 сохраняет те же preregistered RAG/LoRA origin/milestone/query и пропускает aggregate history через conservative semantic sample gate; live rerun запущен. Production backfill по-прежнему использует настоящий centroid similarity gate.
+- [x] B-030 Retrospective validation/calibration. v0.1 выявил false pre-origin history; v0.4 targeted cluster-conditioned OpenAlex history устранил её: RAG и LoRA имеют 0 semantic pre-origin observations. RAG пересекает полезный threshold до ecosystem milestone; LoRA research-only остаётся консервативным. Evidence сохранён в validation artifacts и методологии.
+- [x] B-032 Проверить profile-aware transition `research → implementation` для `software_ai`. GitHub history adapter использует только timestamp-verified relevant commit/release/tag и запрещает repo `created_at`/current description как historical technology timestamps. Live RAG/LoRA benchmark green; evidence: `research/implementation-transition-validation.md`.
 
 ## NEXT
 
-- [ ] B-027 Подключить vetted DeepSeek narrative к опубликованному TOP-candidate snapshot после assembler; хранить enrichment как производный слой, не как evidence.
+- [ ] B-034 Подключить production GitHub path: present-day repository discovery → timestamp-verified commit/release/tag → normalized implementation Observation → semantic gate → TrendState.
 - [ ] B-031 Проверить false positive: research-only cluster на retrospective/live evidence.
-- [ ] B-032 Проверить transition research → patent → implementation.
 - [ ] B-033 Проверить profile routing на минимум трёх направлениях: AI agents, neuromorphic computing, solid-state batteries.
+- [ ] B-035 Проверить profile-aware `research → patent/IP → implementation` на representative hardware/materials case; patent не является обязательной ступенью для `software_ai`.
+- [ ] B-027 Подключить vetted DeepSeek narrative к опубликованному TOP-candidate snapshot после assembler; хранить enrichment как производный слой, не как evidence.
 - [ ] B-009 Получить/настроить EPO OPS developer credentials и выполнить authenticated smoke query; секреты не коммитить.
 - [ ] B-021 Продолжить Cloudflare live capability smoke: Worker/public shell уже проверены; остаются D1 + R2 + Workers AI bindings и минимальный end-to-end data write/read/inference test. Только после полного smoke выполнить B-008.
 
