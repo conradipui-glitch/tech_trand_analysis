@@ -123,3 +123,16 @@ R2 Data Catalog/R2 SQL остаются later-stage опцией: техниче
 - схема намеренно близка к будущему D1 implementation.
 
 Parquet/DuckDB не добавляются на этом этапе только ради архитектурной симметрии. Они появятся, когда embedding/clustering benchmark даст реальный аналитический corpus и станет ясно, какие columnar queries действительно нужны.
+
+## ADR-016 — BGE-M3 primary embedding geometry for clustering v0
+**Status:** Accepted for MVP prototype
+
+Project-specific benchmark B-015 compared `Qwen/Qwen3-Embedding-0.6B` and `BAAI/bge-m3` on the same 48-document RU/EN technological gold corpus.
+
+Both models achieved MRR=1.0 and hard-negative win rate=1.0. Qwen3 achieved higher Recall@3/5, but BGE-M3 achieved pair-ordering accuracy=1.0 versus 0.6667 for Qwen3 on same-technology RU↔EN pairs against adjacent-technology hard negatives.
+
+Because detector core requires document↔document cluster geometry across mixed-language evidence, BGE-M3 is selected as the default `EmbeddingProvider` for B-016 clustering.
+
+Measured GitHub CPU run also showed lower peak RSS and faster corpus encoding for BGE-M3, though slower initial model load. These runtime numbers are environment-specific.
+
+Qwen3 remains a retrieval candidate/fallback; provider abstraction stays mandatory and no BGE-specific assumptions may leak into Observation or TrendState contracts.
