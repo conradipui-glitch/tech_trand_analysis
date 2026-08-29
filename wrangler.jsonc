@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tech-trend-analysis",
+  "main": "web/worker.js",
+  "compatibility_date": "2026-08-30",
+  "assets": {
+    "directory": "./web/public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  }
+}
