@@ -77,3 +77,12 @@ Source Router определяет:
 Patent signal повышает confidence в переходе технологии к applied/IP activity, но не является обязательным условием emerging trend. Патентная публикация может заметно запаздывать относительно invention/implementation, особенно для быстро развивающегося software/AI.
 
 Поэтому отсутствие патентов не даёт negative penalty молодым software trends; для hardware/materials patent evidence имеет значительно больший вес.
+
+## ADR-013 — Extensible provider contract, stable evidence semantics
+**Status:** Accepted
+
+`Observation.provider`, `artifact_kind`, actor kind и relationship type не являются enum в центральной schema. Новый источник может появиться в `sources.yaml` и adapter layer без изменения аналитического ядра и transport contract.
+
+Напротив, `evidence_type` остаётся небольшой стабильной семантической таксономией, потому что именно она используется в cross-source scoring. Неизвестный provider-specific тип должен быть отображён в существующий evidence class или `other`, а не протаскиваться в scoring как новый произвольный класс.
+
+Итоговая выдача TOP-15 обязана отдельно показывать `score` и `confidence`, coverage источников и все score components. Если evidence недостаточно, сервис возвращает `partial`/`insufficient_evidence`, а не придумывает 15 слабых трендов ради заполнения списка.
