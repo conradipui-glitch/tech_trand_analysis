@@ -1,4 +1,4 @@
-version: 0.4.0
+version: 0.5.0
 preregistered_at: "2026-08-29"
 notes:
   - "Milestone dates are ecosystem/adoption proxies selected before collecting historical curves; they are not claims that the technology became universally obvious on that exact day."
@@ -6,7 +6,7 @@ notes:
   - "v0.2 added conservative sample-based semantic gating after v0.1 showed that aggregate keyword counts manufacture pre-origin history."
   - "v0.3 strengthened alias/context disambiguation and excluded current GitHub repository metadata from historical scoring because mutable name/description can leak future terminology backward to repository created_at."
   - "v0.4 preserves the original broad discovery queries and all preregistered dates, but adds a mechanically targeted historical query for each already-discovered semantic cluster. This mirrors production targeted backfill: discovery is broad; history is cluster-conditioned."
-  - "OpenAlex supports quoted phrases and Boolean search. GitHub implementation history still requires a timestamp-verified relevant commit/release/tag and is calibrated separately in B-032."
+  - "v0.5 keeps every original origin/milestone date and adds preregistered GitHub repositories for B-032. GitHub implementation time is eligible only from a relevant commit/release/tag timestamp; repository created_at and current description remain ineligible."
 
 cases:
   - id: rag
@@ -27,6 +27,14 @@ cases:
         - "language model"
         - "nlp"
         - "retrieval"
+    implementation_validation:
+      repositories:
+        - repository: "huggingface/transformers"
+          distinctive_terms:
+            - "RagRetriever"
+        - repository: "openai/chatgpt-retrieval-plugin"
+          distinctive_terms:
+            - "ChatGPT Retrieval Plugin"
     origin:
       date: "2020-05-22"
       kind: research
@@ -63,6 +71,14 @@ cases:
         - "parameter efficient"
         - "transformer"
         - "adapter"
+    implementation_validation:
+      repositories:
+        - repository: "microsoft/LoRA"
+          distinctive_terms:
+            - "LoRA"
+        - repository: "huggingface/peft"
+          distinctive_terms:
+            - "LoRA"
     origin:
       date: "2021-06-17"
       kind: research
