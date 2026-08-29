@@ -1,0 +1,73 @@
+{
+  "schema_version": "0.2.0",
+  "observation_id": "github:vercel-labs/agent-browser",
+  "provider": "github",
+  "evidence_type": "implementation",
+  "artifact_kind": "repository",
+  "external_id": "vercel-labs/agent-browser",
+  "canonical_url": "https://github.com/vercel-labs/agent-browser",
+  "title": "agent-browser",
+  "text": "Browser automation CLI for AI agents",
+  "published_at": "2026-01-11T05:38:15Z",
+  "updated_at": "2026-08-26T23:52:15Z",
+  "observed_at": "2026-08-29T16:30:21Z",
+  "language": "en",
+  "actors": [
+    {
+      "name": "vercel-labs",
+      "kind": "organization",
+      "external_id": "108547162",
+      "country": null
+    }
+  ],
+  "source_topics": [
+    "browser automation",
+    "AI agents"
+  ],
+  "classifications": [],
+  "metrics": {
+    "stars": 41544,
+    "forks": 2755,
+    "open_issues": 672,
+    "subscribers": 103,
+    "repository_size_kb": 20383
+  },
+  "relationships": [],
+  "quality_flags": {
+    "archived": false,
+    "fork": false
+  },
+  "fingerprints": {
+    "canonical_key": "github:vercel-labs/agent-browser",
+    "content_hash": null,
+    "simhash": null
+  },
+  "collection_context": {
+    "technology_direction": "AI agents",
+    "source_profile": "software_ai",
+    "query_id": "query:ai-agents:2026-08-29",
+    "matched_terms": [
+      "AI agents",
+      "browser automation"
+    ]
+  },
+  "rights": {
+    "license": "Apache-2.0",
+    "access_level": "public",
+    "reuse_notes": null
+  },
+  "analysis": {
+    "relevance": null,
+    "novelty": null,
+    "cluster_id": null,
+    "embedding_ref": null,
+    "technology_labels": []
+  },
+  "raw_ref": "r2://raw/github/2026/08/29/vercel-labs__agent-browser.json",
+  "provenance": {
+    "collector": "github_rest",
+    "collector_version": "0.1.0",
+    "request_id": null,
+    "source_endpoint": "GET /repos/{owner}/{repo}"
+  }
+}
