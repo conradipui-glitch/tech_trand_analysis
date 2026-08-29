@@ -10,7 +10,7 @@ from typing import Any
 
 import yaml
 
-from scripts.run_retrospective_validation import (
+from run_retrospective_validation import (
     PublicHistoryClient,
     _aggregate_state,
     _first_active_period,
