@@ -6,8 +6,8 @@
 - [x] B-002 Провести source validation spike: GitHub.
 - [x] B-003 Провести source validation spike: Hugging Face Hub.
 - [x] B-004 Провести source validation spike: OpenAlex historical/quantitative queries.
-- [ ] B-005 Уточнить и зафиксировать Observation schema с учётом Source Router и provider-specific metrics.
-- [ ] B-006 Зафиксировать JSON contract итоговой карточки тренда.
+- [x] B-005 Уточнить и зафиксировать Observation schema с учётом Source Router и provider-specific metrics. Закрыто schema v0.2.0 + fixtures + contract tests.
+- [x] B-006 Зафиксировать JSON contract итоговой карточки тренда. Закрыто `trend-result.schema.json` v0.2.0 + fixture.
 - [ ] B-007 Провести Cloudflare deployment/cost spike: Workers, D1, R2, Queues/Workflows, Vectorize, Workers AI; определить границу Cloudflare vs local/VPS.
 
 ## NEXT
@@ -44,4 +44,4 @@
 
 ## BLOCKED
 
-Нет архитектурных blockers. EPO live smoke требует отдельной регистрации/credentials, но не блокирует B-005/B-006/B-007/B-010.
+Нет архитектурных blockers. EPO live smoke требует отдельной регистрации/credentials, но не блокирует B-007/B-010 и последующие software/data tasks.
