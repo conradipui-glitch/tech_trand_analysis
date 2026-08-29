@@ -4,7 +4,7 @@ import re
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Iterable, Sequence
+from typing import Any
 from urllib.parse import quote
 
 import httpx
@@ -324,7 +324,7 @@ def _matched_terms(text: str, query: GitHubHistoryQuery) -> tuple[str, ...]:
     matched: list[str] = []
 
     for term in query.distinctive_terms:
-        if _term_hit(term, normalized_text, tokens):
+        if _distinctive_hit(term, text):
             matched.append(term)
 
     for alias in query.aliases:
@@ -341,6 +341,21 @@ def _matched_terms(text: str, query: GitHubHistoryQuery) -> tuple[str, ...]:
         return ()
     matched.extend(context_hits)
     return tuple(dict.fromkeys(matched))
+
+
+def _distinctive_hit(term: str, text: str) -> bool:
+    raw_term_tokens = [token.strip("-") for token in _TOKEN_RE.findall(str(term)) if token.strip("-")]
+    raw_text_tokens = [token.strip("-") for token in _TOKEN_RE.findall(str(text)) if token.strip("-")]
+    if not raw_term_tokens:
+        return False
+    case_sensitive = any(char.islower() for char in term) and any(char.isupper() for char in term)
+    if len(raw_term_tokens) == 1:
+        if case_sensitive:
+            return raw_term_tokens[0] in set(raw_text_tokens)
+        return raw_term_tokens[0].casefold() in {token.casefold() for token in raw_text_tokens}
+    if case_sensitive:
+        return " ".join(raw_term_tokens) in " ".join(raw_text_tokens)
+    return _normalize(term) in _normalize(text)
 
 
 def _term_hit(term: str, normalized_text: str, tokens: set[str]) -> bool:
