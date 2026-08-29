@@ -17,46 +17,117 @@
     "provenance"
   ],
   "properties": {
-    "schema_version": {"type": "string", "const": "0.1.0"},
-    "observation_id": {"type": "string", "minLength": 3},
+    "schema_version": {
+      "type": "string",
+      "const": "0.2.0"
+    },
+    "observation_id": {
+      "type": "string",
+      "minLength": 3
+    },
     "provider": {
       "type": "string",
-      "enum": ["openalex", "github", "huggingface", "epo_ops", "report", "web", "other"]
+      "minLength": 1,
+      "description": "Stable provider identifier from source registry, e.g. github, openalex, epo_ops. Not enumerated so new sources do not require a core schema change."
     },
     "evidence_type": {
       "type": "string",
-      "enum": ["research", "patent", "implementation", "product", "adoption", "investment", "regulation", "analysis"]
+      "enum": [
+        "research",
+        "patent",
+        "implementation",
+        "product",
+        "adoption",
+        "investment",
+        "regulation",
+        "analysis",
+        "other"
+      ],
+      "description": "Stable semantic taxonomy consumed by scoring. New providers should map into this taxonomy."
     },
     "artifact_kind": {
       "type": "string",
-      "enum": ["paper", "patent", "repository", "model", "dataset", "space", "report", "webpage", "other"]
+      "minLength": 1,
+      "description": "Provider-normalized artifact label such as paper, patent, repository, model, dataset, report. Extensible without schema changes."
     },
-    "external_id": {"type": "string", "minLength": 1},
-    "canonical_url": {"type": ["string", "null"], "format": "uri"},
-    "title": {"type": "string", "minLength": 1},
-    "text": {"type": ["string", "null"], "description": "Compact abstract/description/snippet, not necessarily full source text."},
-    "published_at": {"type": ["string", "null"], "format": "date-time"},
-    "updated_at": {"type": ["string", "null"], "format": "date-time"},
-    "observed_at": {"type": "string", "format": "date-time"},
-    "language": {"type": ["string", "null"]},
+    "external_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonical_url": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uri"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "text": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Compact abstract/description/snippet; do not require full source text."
+    },
+    "published_at": {
+      "$ref": "#/$defs/source_time_or_null"
+    },
+    "updated_at": {
+      "$ref": "#/$defs/source_time_or_null"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "language": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "actors": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "kind"],
+        "required": [
+          "name",
+          "kind"
+        ],
         "properties": {
-          "name": {"type": "string"},
-          "kind": {"type": "string", "enum": ["person", "organization", "institution", "company", "unknown"]},
-          "external_id": {"type": ["string", "null"]},
-          "country": {"type": ["string", "null"]}
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Extensible actor taxonomy: person, organization, institution, company, etc."
+          },
+          "external_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         }
       },
       "default": []
     },
     "source_topics": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string"
+      },
       "default": []
     },
     "classifications": {
@@ -65,81 +136,253 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["scheme", "value"],
+        "required": [
+          "scheme",
+          "value"
+        ],
         "properties": {
-          "scheme": {"type": "string"},
-          "value": {"type": "string"},
-          "label": {"type": ["string", "null"]}
+          "scheme": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         }
       },
       "default": []
     },
     "metrics": {
       "type": "object",
-      "description": "Provider metrics at observed_at. Values must stay raw; cross-source normalization happens later.",
-      "additionalProperties": {"type": ["number", "integer", "string", "boolean", "null"]},
+      "description": "Provider metrics captured at observed_at. Values remain raw; cross-source normalization happens downstream.",
+      "additionalProperties": {
+        "type": [
+          "number",
+          "integer",
+          "string",
+          "boolean",
+          "null"
+        ]
+      },
       "default": {}
     },
     "relationships": {
       "type": "array",
-      "description": "Links used to collapse derivatives/families/mirrors.",
+      "description": "Links used to collapse derivatives/families/mirrors. Relation names are extensible.",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["type", "target_id"],
+        "required": [
+          "type",
+          "target_id"
+        ],
         "properties": {
-          "type": {"type": "string", "enum": ["derivative_of", "base_model", "patent_family", "fork_of", "mirror_of", "version_of", "related"]},
-          "target_id": {"type": "string"}
+          "type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "target_id": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       },
       "default": []
     },
     "quality_flags": {
       "type": "object",
-      "additionalProperties": {"type": ["boolean", "string", "number", "null"]},
+      "additionalProperties": {
+        "type": [
+          "boolean",
+          "string",
+          "number",
+          "null"
+        ]
+      },
       "default": {}
     },
     "fingerprints": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "canonical_key": {"type": ["string", "null"]},
-        "content_hash": {"type": ["string", "null"]},
-        "simhash": {"type": ["string", "null"]}
+        "canonical_key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "content_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "simhash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "collection_context": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "technology_direction": {"type": ["string", "null"]},
-        "source_profile": {"type": ["string", "null"]},
-        "query_id": {"type": ["string", "null"]},
-        "matched_terms": {"type": "array", "items": {"type": "string"}, "default": []}
+        "technology_direction": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_profile": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "query_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "matched_terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      }
+    },
+    "rights": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional access/reuse metadata. This is informational and not a legal determination.",
+      "properties": {
+        "license": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "access_level": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reuse_notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "analysis": {
       "type": "object",
-      "description": "Optional downstream fields; adapters should not invent these.",
+      "description": "Optional downstream fields; adapters must not invent them.",
       "additionalProperties": false,
       "properties": {
-        "relevance": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-        "novelty": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
-        "cluster_id": {"type": ["string", "null"]},
-        "embedding_ref": {"type": ["string", "null"]},
-        "technology_labels": {"type": "array", "items": {"type": "string"}, "default": []}
+        "relevance": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "novelty": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "cluster_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "embedding_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "technology_labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
       }
     },
-    "raw_ref": {"type": ["string", "null"], "description": "Pointer to temporary raw object, e.g. R2 key; never secrets."},
+    "raw_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Pointer to temporary raw object, e.g. R2 key. Never store secrets."
+    },
     "provenance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["collector", "collector_version"],
+      "required": [
+        "collector",
+        "collector_version"
+      ],
       "properties": {
-        "collector": {"type": "string"},
-        "collector_version": {"type": "string"},
-        "request_id": {"type": ["string", "null"]}
+        "collector": {
+          "type": "string",
+          "minLength": 1
+        },
+        "collector_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "request_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_endpoint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
+    }
+  },
+  "$defs": {
+    "source_time_or_null": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "type": "string",
+          "format": "date-time"
+        }
+      ]
     }
   }
 }
