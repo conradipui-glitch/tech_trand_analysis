@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 import time
 from dataclasses import dataclass
@@ -14,6 +13,7 @@ from typing import Any
 import httpx
 import yaml
 
+from tech_trend_analysis.history_filter import SampleGateResult, gate_sampled_count
 from tech_trend_analysis.scoring import EmergingScorer
 from tech_trend_analysis.trend_state import PeriodBucket, TrendState
 
@@ -30,14 +30,14 @@ class MonthWindow:
 
 
 class PublicHistoryClient:
-    def __init__(self, *, github_token: str, sample_size: int = 5) -> None:
+    def __init__(self, *, github_token: str, sample_size: int = 10) -> None:
         if not github_token:
             raise ValueError("GITHUB_TOKEN is required for retrospective validation")
         self.sample_size = sample_size
         self.client = httpx.Client(
             timeout=30.0,
             follow_redirects=True,
-            headers={"User-Agent": "tech-trend-analysis-retrospective/0.1"},
+            headers={"User-Agent": "tech-trend-analysis-retrospective/0.2"},
         )
         self.github_headers = {
             "Accept": "application/vnd.github+json",
@@ -65,36 +65,37 @@ class PublicHistoryClient:
         for work in results:
             if not isinstance(work, dict):
                 continue
+            work_actors: set[str] = set()
+            authorships = work.get("authorships")
+            if isinstance(authorships, list):
+                for authorship in authorships:
+                    if not isinstance(authorship, dict):
+                        continue
+                    institutions = authorship.get("institutions")
+                    if isinstance(institutions, list):
+                        for institution in institutions:
+                            if not isinstance(institution, dict):
+                                continue
+                            actor_id = institution.get("id") or institution.get("display_name")
+                            if isinstance(actor_id, str) and actor_id.strip():
+                                work_actors.add(f"openalex:institution:{actor_id.strip()}")
+                    author = authorship.get("author")
+                    if isinstance(author, dict):
+                        actor_id = author.get("id") or author.get("display_name")
+                        if isinstance(actor_id, str) and actor_id.strip():
+                            work_actors.add(f"openalex:author:{actor_id.strip()}")
+            actors.update(work_actors)
             samples.append(
                 {
                     "id": work.get("id"),
                     "title": work.get("title") or work.get("display_name"),
                     "date": work.get("publication_date"),
+                    "actor_keys": sorted(work_actors),
                 }
             )
-            authorships = work.get("authorships")
-            if not isinstance(authorships, list):
-                continue
-            for authorship in authorships:
-                if not isinstance(authorship, dict):
-                    continue
-                institutions = authorship.get("institutions")
-                if isinstance(institutions, list) and institutions:
-                    for institution in institutions:
-                        if not isinstance(institution, dict):
-                            continue
-                        actor_id = institution.get("id") or institution.get("display_name")
-                        if isinstance(actor_id, str) and actor_id.strip():
-                            actors.add(f"openalex:institution:{actor_id.strip()}")
-                author = authorship.get("author")
-                if isinstance(author, dict):
-                    actor_id = author.get("id") or author.get("display_name")
-                    if isinstance(actor_id, str) and actor_id.strip():
-                        actors.add(f"openalex:author:{actor_id.strip()}")
 
-        count = int(meta.get("count") or 0)
         return {
-            "count": count,
+            "count": int(meta.get("count") or 0),
             "sample_actors": sorted(actors),
             "samples": samples,
         }
@@ -112,11 +113,13 @@ class PublicHistoryClient:
         for repo in items:
             if not isinstance(repo, dict):
                 continue
+            repo_actors: set[str] = set()
             owner = repo.get("owner")
             if isinstance(owner, dict):
                 login = owner.get("login")
                 if isinstance(login, str) and login.strip():
-                    actors.add(f"github:owner:{login.strip().casefold()}")
+                    repo_actors.add(f"github:owner:{login.strip().casefold()}")
+            actors.update(repo_actors)
             samples.append(
                 {
                     "id": repo.get("id"),
@@ -124,6 +127,7 @@ class PublicHistoryClient:
                     "description": repo.get("description"),
                     "created_at": repo.get("created_at"),
                     "stars": repo.get("stargazers_count"),
+                    "actor_keys": sorted(repo_actors),
                 }
             )
 
@@ -171,17 +175,14 @@ class PublicHistoryClient:
         raise RuntimeError(f"request failed after retries: {url}") from last_error
 
     def _respect_github_search_limit(self) -> None:
-        # Authenticated repository search has a separate custom limit. A fixed
-        # delay keeps this workflow below 30 search requests/minute without
-        # coupling validation to the much larger core REST quota.
         time.sleep(2.1)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run preregistered retrospective trend validation")
     parser.add_argument("--cases", default="validation/retrospective_cases.yaml")
-    parser.add_argument("--output", default="validation/results/retrospective-v0.json")
-    parser.add_argument("--sample-size", type=int, default=5)
+    parser.add_argument("--output", default="validation/results/retrospective-v0.2.json")
+    parser.add_argument("--sample-size", type=int, default=10)
     return parser.parse_args()
 
 
@@ -205,15 +206,15 @@ def main() -> None:
         "preregistered_at": config.get("preregistered_at"),
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "count_semantics": {
-            "period_total": "provider aggregate result counts, not number of representative samples stored",
-            "openalex": "monthly search meta.count mapped to research evidence",
-            "github": "monthly repository search total_count mapped to implementation evidence",
-            "actor_diversity": "lower-bound estimate from sampled representative results only",
+            "raw_provider_total": "provider aggregate search count retained only for audit",
+            "period_total": "cluster-conditioned estimate derived from representative provider samples and used for scoring",
+            "single_match_rule": "one sampled semantic match is never amplified beyond one observation",
+            "actor_diversity": "lower-bound estimate from actors attached to accepted representative samples only",
         },
         "methodology_warning": (
-            "This is Phase-10 calibration evidence. Aggregate keyword/search curves approximate the volume that a fully "
-            "materialized semantic cluster would contain. Samples are retained to audit query noise. Results must not be "
-            "treated as final production accuracy until B-031/B-032 and live semantic-cluster validation are complete."
+            "Phase-10 calibration evidence. Production targeted backfill uses vector-to-centroid membership gating. "
+            "This retrospective runner cannot materialize every historical provider result, so it uses a conservative "
+            "sample-based semantic proxy before aggregate counts enter TrendState. Raw counts and gate diagnostics remain auditable."
         ),
         "cases": results,
     }
@@ -228,6 +229,7 @@ def main() -> None:
             "first_useful_signal": result["summary"]["first_useful_signal"],
             "lead_months": result["summary"]["lead_months"],
             "target_met": result["summary"]["target_met"],
+            "pre_origin_raw_count": result["summary"]["pre_origin_raw_count"],
             "pre_origin_count": result["summary"]["pre_origin_count"],
         }
         for result in results
@@ -241,30 +243,65 @@ def run_case(case: dict[str, Any], *, client: PublicHistoryClient, scorer: Emerg
     milestone = date.fromisoformat(_required_str(case["milestone"], "date"))
     origin = date.fromisoformat(_required_str(case["origin"], "date"))
     windows = list(month_windows(start, milestone))
+    semantic = case.get("semantic_filter") if isinstance(case.get("semantic_filter"), dict) else {}
+    anchor = str(semantic.get("anchor") or case.get("label") or case.get("technology_direction") or "").strip()
+    aliases = tuple(str(value) for value in semantic.get("aliases", []) if str(value).strip())
+    context_terms = tuple(str(value) for value in semantic.get("context_terms", []) if str(value).strip())
 
     curve: list[dict[str, Any]] = []
     for index, window in enumerate(windows, start=1):
         print(f"[{case_id}] {index}/{len(windows)} {window.key}", flush=True)
         openalex = client.openalex_month(_required_str(case, "openalex_query"), window)
         github = client.github_month(_required_str(case, "github_query"), window)
+
+        oa_gate = gate_sampled_count(
+            raw_count=int(openalex["count"]),
+            sample_texts=[str(item.get("title") or "") for item in openalex["samples"]],
+            anchor_text=anchor,
+            aliases=aliases,
+            context_terms=context_terms,
+        )
+        gh_gate = gate_sampled_count(
+            raw_count=int(github["count"]),
+            sample_texts=[
+                " ".join(
+                    part for part in (str(item.get("full_name") or ""), str(item.get("description") or "")) if part.strip()
+                )
+                for item in github["samples"]
+            ],
+            anchor_text=anchor,
+            aliases=aliases,
+            context_terms=context_terms,
+        )
+        openalex["semantic_gate"] = oa_gate.to_dict()
+        github["semantic_gate"] = gh_gate.to_dict()
+        openalex["accepted_sample_actors"] = _accepted_sample_actors(openalex["samples"], oa_gate)
+        github["accepted_sample_actors"] = _accepted_sample_actors(github["samples"], gh_gate)
+
+        research = oa_gate.estimated_count
+        implementation = gh_gate.estimated_count
         curve.append(
             {
                 "period": window.key,
                 "start": window.start.isoformat(),
                 "end": window.end.isoformat(),
-                "research_count": openalex["count"],
-                "implementation_count": github["count"],
-                "total_count": openalex["count"] + github["count"],
+                "raw_research_count": int(openalex["count"]),
+                "raw_implementation_count": int(github["count"]),
+                "raw_total_count": int(openalex["count"]) + int(github["count"]),
+                "research_count": research,
+                "implementation_count": implementation,
+                "total_count": research + implementation,
                 "openalex": openalex,
                 "github": github,
             }
         )
 
-    first_raw = _first_active_period(curve)
+    first_raw = next((row["period"] for row in curve if row["raw_total_count"] > 0), None)
+    pre_origin_raw_count = sum(
+        row["raw_total_count"] for row in curve if date.fromisoformat(row["start"]) < origin
+    )
     pre_origin_count = sum(
-        row["total_count"]
-        for row in curve
-        if date.fromisoformat(row["start"]) < origin
+        row["total_count"] for row in curve if date.fromisoformat(row["start"]) < origin
     )
 
     timeline: list[dict[str, Any]] = []
@@ -272,13 +309,7 @@ def run_case(case: dict[str, Any], *, client: PublicHistoryClient, scorer: Emerg
         prefix = curve[: end_index + 1]
         first_sustained = _first_sustained_period(prefix)
         if first_sustained is None:
-            timeline.append(
-                {
-                    "period": row["period"],
-                    "score": None,
-                    "reason": "no_sustained_signal_yet",
-                }
-            )
+            timeline.append({"period": row["period"], "score": None, "reason": "no_sustained_signal_yet"})
             continue
         state = _aggregate_state(case, prefix, first_sustained=first_sustained)
         score = scorer.score(state, as_of=date.fromisoformat(row["end"]))
@@ -288,10 +319,7 @@ def run_case(case: dict[str, Any], *, client: PublicHistoryClient, scorer: Emerg
                 "score": round(score.total, 4),
                 "confidence": round(score.confidence, 4),
                 "stage": score.stage,
-                "components": {
-                    key: round(component.value, 4)
-                    for key, component in score.components.items()
-                },
+                "components": {key: round(component.value, 4) for key, component in score.components.items()},
             }
         )
 
@@ -319,16 +347,16 @@ def run_case(case: dict[str, Any], *, client: PublicHistoryClient, scorer: Emerg
         "origin": case.get("origin"),
         "milestone": case.get("milestone"),
         "preregistered_expectation": expectation,
-        "queries": {
-            "openalex": case.get("openalex_query"),
-            "github": case.get("github_query"),
-        },
+        "queries": {"openalex": case.get("openalex_query"), "github": case.get("github_query")},
+        "semantic_filter": {"anchor": anchor, "aliases": list(aliases), "context_terms": list(context_terms)},
         "summary": {
             "first_raw_activity": first_raw,
+            "first_semantic_activity": _first_active_period(curve),
             "first_sustained_activity": _first_sustained_period(curve),
             "first_useful_signal": first_useful,
             "lead_months": lead_months,
             "target_met": target_met,
+            "pre_origin_raw_count": pre_origin_raw_count,
             "pre_origin_count": pre_origin_count,
         },
         "curve": curve,
@@ -336,12 +364,18 @@ def run_case(case: dict[str, Any], *, client: PublicHistoryClient, scorer: Emerg
     }
 
 
-def _aggregate_state(
-    case: dict[str, Any],
-    curve: list[dict[str, Any]],
-    *,
-    first_sustained: str,
-) -> TrendState:
+def _accepted_sample_actors(samples: list[dict[str, Any]], gate: SampleGateResult) -> list[str]:
+    actors: set[str] = set()
+    for index in gate.accepted_indices:
+        if index >= len(samples):
+            continue
+        values = samples[index].get("actor_keys")
+        if isinstance(values, list):
+            actors.update(str(value) for value in values if str(value).strip())
+    return sorted(actors)
+
+
+def _aggregate_state(case: dict[str, Any], curve: list[dict[str, Any]], *, first_sustained: str) -> TrendState:
     active = [row for row in curve if row["total_count"] > 0]
     if not active:
         raise ValueError("cannot aggregate empty historical signal")
@@ -365,8 +399,8 @@ def _aggregate_state(
             periods[row["period"]] = bucket
         research_total += research
         implementation_total += implementation
-        actor_keys.update(row["openalex"].get("sample_actors") or [])
-        actor_keys.update(row["github"].get("sample_actors") or [])
+        actor_keys.update(row["openalex"].get("accepted_sample_actors") or row["openalex"].get("sample_actors") or [])
+        actor_keys.update(row["github"].get("accepted_sample_actors") or row["github"].get("sample_actors") or [])
 
     observation_total = research_total + implementation_total
     evidence_counts: dict[str, int] = {}
@@ -389,7 +423,7 @@ def _aggregate_state(
         trend_id=f"retrospective:{_required_str(case, 'id')}",
         profile=_required_str(case, "profile"),
         technology_direction=_required_str(case, "technology_direction"),
-        embedding_model="retrospective-aggregate",
+        embedding_model="retrospective-semantic-sample-gate",
         centroid=(1.0, 0.0),
         first_seen=first_sustained + "-01T00:00:00Z",
         last_seen=last_active,
@@ -420,9 +454,6 @@ def _first_active_period(curve: list[dict[str, Any]]) -> str | None:
 
 
 def _first_sustained_period(curve: list[dict[str, Any]]) -> str | None:
-    # Back-date first_seen to the first active month only after a second active
-    # month appears within a 3-month window. This avoids declaring one isolated
-    # keyword/search hit a sustained technology signal, without future leakage.
     for index, row in enumerate(curve):
         if row["total_count"] <= 0:
             continue
