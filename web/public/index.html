@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tech Trend Analysis</title>
+  <meta name="description" content="Operator shell for emerging technology trend analysis" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">T</span><div><strong>Tech Trend</strong><small>Analysis / operator v0</small></div></div>
+      <nav>
+        <button class="nav-item active" data-view="analysis">Анализ</button>
+        <button class="nav-item" data-view="system">Система</button>
+        <button class="nav-item" data-view="methodology">Методология</button>
+      </nav>
+      <div class="side-note">Detector core работает отдельно от интерфейса. Здесь показываются только реально рассчитанные snapshots.</div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div><span class="eyebrow">PLATFORM / EMERGING TECHNOLOGY RADAR</span><h1>Радар зарождающихся технологий</h1></div>
+        <div id="healthPill" class="pill">проверяем runtime…</div>
+      </header>
+
+      <section id="view-analysis" class="view active">
+        <form id="searchForm" class="search-card">
+          <label for="direction">Технологическое направление</label>
+          <div class="search-row">
+            <input id="direction" name="direction" placeholder="Например: RAG, LoRA, технологии в ИИ" autocomplete="off" />
+            <button type="submit">Анализировать</button>
+          </div>
+          <p class="hint">Сейчас интерактивно доступны реальные retrospective snapshots RAG и LoRA. Произвольный TOP-15 подключается следующим слоем.</p>
+        </form>
+
+        <div class="status-grid">
+          <article class="status-card"><span>Detector core</span><strong id="coreStatus">—</strong><small>collection → clustering → TrendState → score</small></article>
+          <article class="status-card"><span>Historical validation</span><strong id="validationStatus">—</strong><small>реальные OpenAlex + GitHub curves</small></article>
+          <article class="status-card"><span>TOP-15 assembler</span><strong id="top15Status">—</strong><small>следующий продуктовый слой</small></article>
+        </div>
+
+        <section id="resultPanel" class="panel hidden">
+          <div class="panel-head">
+            <div><span class="eyebrow">CURRENT SNAPSHOT</span><h2 id="resultTitle">—</h2></div>
+            <span id="diagnosticBadge" class="badge warning">diagnostic</span>
+          </div>
+          <p id="diagnosticText" class="diagnostic-text"></p>
+          <div class="metric-grid">
+            <div><span>Origin</span><strong id="originDate">—</strong></div>
+            <div><span>Ecosystem milestone</span><strong id="milestoneDate">—</strong></div>
+            <div><span>Raw first signal</span><strong id="rawSignal">—</strong></div>
+            <div><span>Pre-origin matches</span><strong id="preOrigin">—</strong></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-legend"><span><i class="dot research"></i>OpenAlex / research</span><span><i class="dot implementation"></i>GitHub / implementation</span></div>
+            <canvas id="trendChart" width="1000" height="330"></canvas>
+          </div>
+          <div class="two-col">
+            <article><span class="eyebrow">ORIGIN</span><h3 id="originTitle">—</h3><a id="originLink" target="_blank" rel="noreferrer">Источник</a></article>
+            <article><span class="eyebrow">MILESTONE PROXY</span><h3 id="milestoneTitle">—</h3><a id="milestoneLink" target="_blank" rel="noreferrer">Источник</a></article>
+          </div>
+        </section>
+
+        <section id="emptyPanel" class="panel empty-state">
+          <span class="eyebrow">READY FOR SNAPSHOT</span>
+          <h2>Попробуй «RAG» или «LoRA»</h2>
+          <p>Это уже живая оболочка сервиса. Она читает опубликованный аналитический snapshot через Worker API, а не рисует заглушку.</p>
+        </section>
+      </section>
+
+      <section id="view-system" class="view">
+        <div class="panel"><span class="eyebrow">SYSTEM STATUS</span><h2>Что уже работает</h2><div id="systemDetails" class="system-list"></div></div>
+      </section>
+
+      <section id="view-methodology" class="view">
+        <div class="panel prose">
+          <span class="eyebrow">METHODOLOGY V0</span><h2>Popularity ≠ Emergence</h2>
+          <p>Ранжирование строится по динамике evidence, а не по известности темы. Используются growth, acceleration, novelty, evidence diversity, actor diversity, recency, persistence и maturity penalty.</p>
+          <p><strong>DeepSeek не определяет тренды.</strong> Он подключается после математического ранжирования как аналитик-редактор: объясняет результат человеческим языком, формулирует caveat и «что смотреть дальше», не имея права менять score или придумывать evidence.</p>
+          <p>Текущий retrospective test специально выявил проблему: широкие keyword-запросы дают ложную историю до появления технологии. Следующий фикс — semantic cluster-conditioned historical filtering.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
