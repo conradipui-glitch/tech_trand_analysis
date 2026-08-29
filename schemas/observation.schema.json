@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tech-trend-analysis.local/schemas/observation.schema.json",
+  "title": "Observation",
+  "description": "Source-agnostic normalized evidence item produced by any provider adapter.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "observation_id",
+    "provider",
+    "evidence_type",
+    "artifact_kind",
+    "external_id",
+    "title",
+    "observed_at",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1.0"},
+    "observation_id": {"type": "string", "minLength": 3},
+    "provider": {
+      "type": "string",
+      "enum": ["openalex", "github", "huggingface", "epo_ops", "report", "web", "other"]
+    },
+    "evidence_type": {
+      "type": "string",
+      "enum": ["research", "patent", "implementation", "product", "adoption", "investment", "regulation", "analysis"]
+    },
+    "artifact_kind": {
+      "type": "string",
+      "enum": ["paper", "patent", "repository", "model", "dataset", "space", "report", "webpage", "other"]
+    },
+    "external_id": {"type": "string", "minLength": 1},
+    "canonical_url": {"type": ["string", "null"], "format": "uri"},
+    "title": {"type": "string", "minLength": 1},
+    "text": {"type": ["string", "null"], "description": "Compact abstract/description/snippet, not necessarily full source text."},
+    "published_at": {"type": ["string", "null"], "format": "date-time"},
+    "updated_at": {"type": ["string", "null"], "format": "date-time"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "language": {"type": ["string", "null"]},
+    "actors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "kind"],
+        "properties": {
+          "name": {"type": "string"},
+          "kind": {"type": "string", "enum": ["person", "organization", "institution", "company", "unknown"]},
+          "external_id": {"type": ["string", "null"]},
+          "country": {"type": ["string", "null"]}
+        }
+      },
+      "default": []
+    },
+    "source_topics": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": []
+    },
+    "classifications": {
+      "type": "array",
+      "description": "Provider-native classifications such as CPC/IPC/OpenAlex topic IDs/tags.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scheme", "value"],
+        "properties": {
+          "scheme": {"type": "string"},
+          "value": {"type": "string"},
+          "label": {"type": ["string", "null"]}
+        }
+      },
+      "default": []
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Provider metrics at observed_at. Values must stay raw; cross-source normalization happens later.",
+      "additionalProperties": {"type": ["number", "integer", "string", "boolean", "null"]},
+      "default": {}
+    },
+    "relationships": {
+      "type": "array",
+      "description": "Links used to collapse derivatives/families/mirrors.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "target_id"],
+        "properties": {
+          "type": {"type": "string", "enum": ["derivative_of", "base_model", "patent_family", "fork_of", "mirror_of", "version_of", "related"]},
+          "target_id": {"type": "string"}
+        }
+      },
+      "default": []
+    },
+    "quality_flags": {
+      "type": "object",
+      "additionalProperties": {"type": ["boolean", "string", "number", "null"]},
+      "default": {}
+    },
+    "fingerprints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "canonical_key": {"type": ["string", "null"]},
+        "content_hash": {"type": ["string", "null"]},
+        "simhash": {"type": ["string", "null"]}
+      }
+    },
+    "collection_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "technology_direction": {"type": ["string", "null"]},
+        "source_profile": {"type": ["string", "null"]},
+        "query_id": {"type": ["string", "null"]},
+        "matched_terms": {"type": "array", "items": {"type": "string"}, "default": []}
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "description": "Optional downstream fields; adapters should not invent these.",
+      "additionalProperties": false,
+      "properties": {
+        "relevance": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "novelty": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "cluster_id": {"type": ["string", "null"]},
+        "embedding_ref": {"type": ["string", "null"]},
+        "technology_labels": {"type": "array", "items": {"type": "string"}, "default": []}
+      }
+    },
+    "raw_ref": {"type": ["string", "null"], "description": "Pointer to temporary raw object, e.g. R2 key; never secrets."},
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["collector", "collector_version"],
+      "properties": {
+        "collector": {"type": "string"},
+        "collector_version": {"type": "string"},
+        "request_id": {"type": ["string", "null"]}
+      }
+    }
+  }
+}
