@@ -1,0 +1,76 @@
+{
+  "schema_version": "0.2.0",
+  "observation_id": "epo_ops:EP-example-001",
+  "provider": "epo_ops",
+  "evidence_type": "patent",
+  "artifact_kind": "patent",
+  "external_id": "EP-example-001",
+  "canonical_url": "https://worldwide.espacenet.com/",
+  "title": "Example solid-state battery patent record",
+  "text": "Synthetic fixture used only to validate the provider-neutral contract.",
+  "published_at": "2025-03-12",
+  "updated_at": null,
+  "observed_at": "2026-08-29T16:45:00Z",
+  "language": "en",
+  "actors": [
+    {
+      "name": "Example Energy Lab",
+      "kind": "company",
+      "external_id": null,
+      "country": "DE"
+    }
+  ],
+  "source_topics": [
+    "solid-state battery"
+  ],
+  "classifications": [
+    {
+      "scheme": "CPC",
+      "value": "H01M",
+      "label": "Processes or means for direct conversion of chemical energy into electrical energy"
+    }
+  ],
+  "metrics": {
+    "family_size": 3,
+    "citation_count": 2
+  },
+  "relationships": [
+    {
+      "type": "patent_family",
+      "target_id": "family:example-001"
+    }
+  ],
+  "quality_flags": {},
+  "fingerprints": {
+    "canonical_key": "epo_ops:EP-example-001",
+    "content_hash": null,
+    "simhash": null
+  },
+  "collection_context": {
+    "technology_direction": "solid-state batteries",
+    "source_profile": "materials_energy",
+    "query_id": "query:ssb:2026-08-29",
+    "matched_terms": [
+      "solid-state battery"
+    ]
+  },
+  "rights": {
+    "license": null,
+    "access_level": "metadata",
+    "reuse_notes": "Fixture only; verify provider terms for production ingestion."
+  },
+  "analysis": {
+    "relevance": null,
+    "novelty": null,
+    "cluster_id": null,
+    "embedding_ref": null,
+    "technology_labels": []
+  },
+  "raw_ref": "r2://raw/epo_ops/2026/08/29/EP-example-001.json",
+  "provenance": {
+    "collector": "epo_ops",
+    "collector_version": "0.1.0",
+    "request_id": null,
+    "source_endpoint": "published-data/search"
+  }
+}
