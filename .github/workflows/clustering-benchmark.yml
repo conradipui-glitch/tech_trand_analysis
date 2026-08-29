@@ -10,6 +10,8 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      BENCHMARK_REVISION: "profile-v2"
 
     steps:
       - uses: actions/checkout@v4
