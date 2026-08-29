@@ -15,12 +15,12 @@
 - [x] B-013 Реализовать exact/fuzzy dedup. Exact DOI/URL/provider IDs + conservative title fuzzy; research/implementation evidence не схлопываются; tests green.
 - [x] B-020 Реализовать Source Router v0 (`software_ai`, `hardware_semiconductor`, `materials_energy`, `bio_medtech`, `mixed`) + routing tests.
 - [x] B-022 Собрать resumable collection vertical slice: OpenAlex → raw → Observation → checkpoint. Проверено interruption/resume и GitHub Actions CI.
-- [ ] B-023 Реализовать durable normalized ObservationStore между dedup и embeddings; local implementation должна иметь прямой путь к D1/Cloudflare adaptation.
+- [x] B-023 Реализовать durable normalized ObservationStore между dedup и embeddings. Есть Memory + SQLite реализации, upsert/filter contract и CI tests; SQLite schema intentionally D1-friendly.
+- [ ] B-014 Собрать evaluation corpus.
 
 ## NEXT
 
 - [ ] B-009 Получить/настроить EPO OPS developer credentials и выполнить authenticated smoke query; секреты не коммитить.
-- [ ] B-014 Собрать evaluation corpus.
 - [ ] B-015 Benchmark embeddings: local candidates + Cloudflare Qwen3-Embedding-0.6B/BGE-M3.
 - [ ] B-016 Prototype clustering.
 - [ ] B-017 TrendState prototype.
@@ -51,4 +51,4 @@
 - B-021 live Cloudflare smoke требует доступного Cloudflare action/tool или запуска Wrangler/API из среды с внешней сетью.
 - B-009 EPO live smoke требует отдельной EPO OPS регистрации/credentials.
 
-Оба blocker не мешают текущему core pipeline (`B-023` и далее).
+Оба blocker не мешают текущему core pipeline (`B-014` и далее).
