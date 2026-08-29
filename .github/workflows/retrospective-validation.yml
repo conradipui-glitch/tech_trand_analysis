@@ -6,6 +6,7 @@ on:
     paths:
       - validation/retrospective_cases.yaml
       - scripts/run_retrospective_validation.py
+      - scripts/run_retrospective_validation_v03.py
       - src/tech_trend_analysis/history_filter.py
       - .github/workflows/retrospective-validation.yml
 
@@ -28,16 +29,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e .
-      - name: Run retrospective validation
+      - name: Run retrospective validation v0.3
         run: |
-          python scripts/run_retrospective_validation.py \
+          python scripts/run_retrospective_validation_v03.py \
             --cases validation/retrospective_cases.yaml \
-            --output validation/results/retrospective-v0.2.json \
+            --output validation/results/retrospective-v0.3.json \
             --sample-size 10
       - name: Upload validation result
         uses: actions/upload-artifact@v4
         with:
-          name: retrospective-validation-v0.2
-          path: validation/results/retrospective-v0.2.json
+          name: retrospective-validation-v0.3
+          path: validation/results/retrospective-v0.3.json
           if-no-files-found: error
           retention-days: 30
