@@ -48,11 +48,9 @@ Embeddings, reranking, clustering и математика должны имет�
 Сначала добиться качественного TOP-15 в JSON с evidence и метриками; затем строить UI.
 
 ## ADR-010 — Cloudflare as candidate MVP runtime
-**Status:** Accepted for spike
+**Status:** Superseded by ADR-014 after spike
 
-Cloudflare рассматривается как основной кандидат для публичного runtime MVP: Workers для API/cron/orchestration, D1 для компактного operational state, R2 для raw/Parquet/evidence, Queues/Workflows для фоновой обработки, Vectorize как возможный managed ANN layer и Workers AI как дополнительный inference provider.
-
-Это не отменяет local-first ML: тяжёлые embeddings/clustering/эксперименты могут выполняться локально или на VPS, а Cloudflare обслуживает публичный сервис и лёгкую оркестрацию. Перед фиксацией production architecture провести отдельный deployment/cost spike.
+Cloudflare рассматривался как кандидат публичного runtime. Capability/cost spike завершён и решение уточнено в ADR-014.
 
 Секреты Cloudflare никогда не коммитить и не сохранять в проектной документации; использовать Secrets/Bindings/локальные env-файлы вне Git.
 
@@ -86,3 +84,26 @@ Patent signal повышает confidence в переходе технологи
 Напротив, `evidence_type` остаётся небольшой стабильной семантической таксономией, потому что именно она используется в cross-source scoring. Неизвестный provider-specific тип должен быть отображён в существующий evidence class или `other`, а не протаскиваться в scoring как новый произвольный класс.
 
 Итоговая выдача TOP-15 обязана отдельно показывать `score` и `confidence`, coverage источников и все score components. Если evidence недостаточно, сервис возвращает `partial`/`insufficient_evidence`, а не придумывает 15 слабых трендов ради заполнения списка.
+
+## ADR-014 — Cloudflare hybrid runtime v0
+**Status:** Accepted for MVP
+
+Capability/cost spike показал, что Cloudflare подходит как основной публичный runtime, но Workers Free не подходит для тяжёлого численного ML из-за 10 ms CPU/request.
+
+Распределение ответственности:
+
+- **Worker + static assets** — API/UI, request validation, status, лёгкая маршрутизация;
+- **D1** — jobs, checkpoints, source health, TrendState и компактные агрегаты;
+- **R2** — raw/normalized batches, evidence, candidate vectors и exports;
+- **Queues** — только batch/page-level jobs, не одна очередь на каждый Observation;
+- **Workflows** — network-bound orchestration;
+- **Workers AI** — first-class candidate для embeddings/rerank/cheap inference;
+- **AI Gateway** — observability, spend/rate limits, retries/fallback и external analyst routing;
+- **Vectorize** — trend/microcluster centroids и небольшой active candidate layer, не весь document corpus;
+- **local PC/VPS** — heavy clustering, retrospective backfills, model benchmarks и distillation.
+
+Причина Vectorize policy: Free tier хранит 5M vector dimensions, то есть примерно 4.9k 1024-dimensional vectors. Этого достаточно для trend centroids, но недостаточно для большого observation corpus.
+
+Workers AI free allocation при текущем тарифе Qwen3-Embedding-0.6B/BGE-M3 теоретически покрывает около 9.3M embedding input tokens/day, если не расходовать общий дневной neuron pool на другие модели. Поэтому Cloudflare embeddings включаются в benchmark рядом с local providers, но не считаются заранее победителем.
+
+R2 Data Catalog/R2 SQL остаются later-stage опцией: технически полезны для Iceberg/Parquet analytics, но создают лишнюю сложность до доказательства detector core.
