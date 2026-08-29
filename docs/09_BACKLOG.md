@@ -14,15 +14,15 @@
 - [x] B-012 Реализовать raw buffer. Есть JSONL.gz sink с R2-compatible key layout + tests.
 - [x] B-013 Реализовать exact/fuzzy dedup. Exact DOI/URL/provider IDs + conservative title fuzzy; research/implementation evidence не схлопываются; tests green.
 - [x] B-014 Собрать evaluation corpus. v0: 48 passages / 12 clusters / 3 profiles / RU+EN, 24 retrieval queries, 24 pair cases, explicit hard negatives; corpus validation green in CI.
+- [x] B-015 Benchmark embeddings. Реальные CPU GitHub Actions runs: BGE-M3 выбран primary для clustering; Qwen3-Embedding-0.6B оставлен retrieval/fallback candidate. Raw results persisted in `research/benchmark-results/`.
 - [x] B-020 Реализовать Source Router v0 (`software_ai`, `hardware_semiconductor`, `materials_energy`, `bio_medtech`, `mixed`) + routing tests.
 - [x] B-022 Собрать resumable collection vertical slice: OpenAlex → raw → Observation → checkpoint. Проверено interruption/resume и GitHub Actions CI.
 - [x] B-023 Реализовать durable normalized ObservationStore между dedup и embeddings. Есть Memory + SQLite реализации, upsert/filter contract и CI tests; SQLite schema intentionally D1-friendly.
-- [ ] B-015 Benchmark embeddings: provider-agnostic harness готов и покрыт CI; выполнить реальные прогоны Qwen3-Embedding-0.6B и BGE-M3 local/Cloudflare, сравнить quality + runtime + memory + storage.
+- [ ] B-016 Prototype clustering на BGE-M3 geometry: сравнить discovery clustering без знания числа кластеров, выбрать threshold/algorithm и проверить purity/ARI/NMI на gold corpus.
 
 ## NEXT
 
 - [ ] B-009 Получить/настроить EPO OPS developer credentials и выполнить authenticated smoke query; секреты не коммитить.
-- [ ] B-016 Prototype clustering.
 - [ ] B-017 TrendState prototype.
 - [ ] B-018 Targeted historical backfill.
 - [ ] B-019 Emerging Score v0.
@@ -50,6 +50,5 @@
 
 - B-021 live Cloudflare smoke требует доступного Cloudflare action/tool или запуска Wrangler/API из среды с внешней сетью.
 - B-009 EPO live smoke требует отдельной EPO OPS регистрации/credentials.
-- B-015 реальные Cloudflare model runs требуют доступного Workers AI endpoint/tool; local runs требуют доступной среды с весами модели.
 
-Эти blockers не меняют архитектуру detector core. После B-015 переходить к B-016 clustering; не выбирать embedding model по leaderboard без project corpus benchmark.
+Текущий core pipeline не заблокирован: B-016 clustering выполняется локально/на GitHub Actions с выбранным BGE-M3 geometry.
