@@ -1,11 +1,12 @@
-version: 0.3.0
+version: 0.4.0
 preregistered_at: "2026-08-29"
 notes:
   - "Milestone dates are ecosystem/adoption proxies selected before collecting historical curves; they are not claims that the technology became universally obvious on that exact day."
   - "Validation must preserve raw monthly provider counts and sampled actor evidence. Do not change case dates after seeing score curves without creating a new validation version."
   - "v0.2 added conservative sample-based semantic gating after v0.1 showed that aggregate keyword counts manufacture pre-origin history."
-  - "v0.3 keeps every original origin/milestone date and query, strengthens alias/context disambiguation, and excludes current GitHub repository metadata from historical scoring because current name/description can leak future terminology backward to repository created_at."
-  - "OpenAlex publication history remains eligible after semantic gating. GitHub implementation history requires a timestamp-verified relevant commit/release/tag and is calibrated separately in B-032."
+  - "v0.3 strengthened alias/context disambiguation and excluded current GitHub repository metadata from historical scoring because mutable name/description can leak future terminology backward to repository created_at."
+  - "v0.4 preserves the original broad discovery queries and all preregistered dates, but adds a mechanically targeted historical query for each already-discovered semantic cluster. This mirrors production targeted backfill: discovery is broad; history is cluster-conditioned."
+  - "OpenAlex supports quoted phrases and Boolean search. GitHub implementation history still requires a timestamp-verified relevant commit/release/tag and is calibrated separately in B-032."
 
 cases:
   - id: rag
@@ -17,6 +18,7 @@ cases:
     validation_start: "2019-01-01"
     semantic_filter:
       anchor: "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
+      historical_query: '"retrieval augmented generation"'
       aliases:
         - "retrieval augmented generation"
         - "rag"
@@ -50,6 +52,7 @@ cases:
     validation_start: "2020-01-01"
     semantic_filter:
       anchor: "LoRA Low-Rank Adaptation of Large Language Models"
+      historical_query: '"low rank adaptation" AND ("language model" OR "language models" OR LLM OR transformer)'
       aliases:
         - "low rank adaptation"
         - "lora"
