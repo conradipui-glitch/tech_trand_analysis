@@ -1,0 +1,42 @@
+name: retrospective-validation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - validation/retrospective_cases.yaml
+      - scripts/run_retrospective_validation.py
+      - .github/workflows/retrospective-validation.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+      - name: Run retrospective validation
+        run: |
+          python scripts/run_retrospective_validation.py \
+            --cases validation/retrospective_cases.yaml \
+            --output validation/results/retrospective-v0.json \
+            --sample-size 5
+      - name: Upload validation result
+        uses: actions/upload-artifact@v4
+        with:
+          name: retrospective-validation-v0
+          path: validation/results/retrospective-v0.json
+          if-no-files-found: error
+          retention-days: 30
