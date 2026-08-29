@@ -36,8 +36,11 @@ class MicroclustererTests(unittest.TestCase):
 
     def test_hybrid_can_split_lexically_distinct_dense_neighbors(self):
         clusterer = Microclusterer()
-        # Dense vectors intentionally almost identical. Lexical information must
-        # separate the groups when alpha gives it enough weight.
+        # Dense vectors intentionally almost identical. With alpha=0.50 the
+        # lexical term must be strong enough to merge each lexical pair while
+        # keeping the two vocabularies apart. In this synthetic geometry the
+        # within-pair hybrid distances are about 0.31-0.36 and cross-pair
+        # distances are about 0.50, so 0.40 is the meaningful test threshold.
         result = clusterer.cluster(
             profile="software_ai",
             observation_ids=["browser-1", "browser-2", "code-1", "code-2"],
@@ -55,7 +58,7 @@ class MicroclustererTests(unittest.TestCase):
             ],
             config=MicroclusterConfig(
                 algorithm="agglomerative_hybrid_dense_tfidf",
-                distance_threshold=0.30,
+                distance_threshold=0.40,
                 dense_alpha=0.50,
                 calibration="test",
             ),
