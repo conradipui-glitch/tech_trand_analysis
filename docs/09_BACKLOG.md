@@ -12,9 +12,10 @@
 - [x] B-010 Реализовать первый adapter: OpenAlex. Есть retry/cursor pagination/mapping в Observation v0.2.0 + tests.
 - [x] B-011 Реализовать incremental checkpoints. Есть Memory/File stores + atomic local persistence + tests.
 - [x] B-012 Реализовать raw buffer. Есть JSONL.gz sink с R2-compatible key layout + tests.
+- [x] B-013 Реализовать exact/fuzzy dedup. Exact DOI/URL/provider IDs + conservative title fuzzy; research/implementation evidence не схлопываются; tests green.
 - [x] B-020 Реализовать Source Router v0 (`software_ai`, `hardware_semiconductor`, `materials_energy`, `bio_medtech`, `mixed`) + routing tests.
 - [x] B-022 Собрать resumable collection vertical slice: OpenAlex → raw → Observation → checkpoint. Проверено interruption/resume и GitHub Actions CI.
-- [ ] B-013 Реализовать exact/fuzzy dedup.
+- [ ] B-023 Реализовать durable normalized ObservationStore между dedup и embeddings; local implementation должна иметь прямой путь к D1/Cloudflare adaptation.
 
 ## NEXT
 
@@ -50,4 +51,4 @@
 - B-021 live Cloudflare smoke требует доступного Cloudflare action/tool или запуска Wrangler/API из среды с внешней сетью.
 - B-009 EPO live smoke требует отдельной EPO OPS регистрации/credentials.
 
-Оба blocker не мешают текущему core pipeline (`B-013` и далее).
+Оба blocker не мешают текущему core pipeline (`B-023` и далее).
