@@ -46,7 +46,7 @@ Validation code: `scripts/validate_routing_research_only.py`, `tests/test_source
 
 ## Retrospective v0.5 completed (post-fix confirmation)
 
-The full active retrospective was rerun in [GitHub Actions 37849106788](https://github.com/conradipui-glitch/tech_trand_analysis/actions/runs/37849106788), succeeded, and uploaded a real JSON artifact `retrospective-validation-v0.5` (21? no, workflow retention 30 days).
+The full active retrospective was rerun in [GitHub Actions 37849106788](https://github.com/conradipui-glitch/tech_trand_analysis/actions/runs/37849106788), succeeded, and uploaded a real JSON artifact `retrospective-validation-v0.5` (30-day retention).
 
 | Case | First matching gated research month | Sustained research month | Useful score signal | Lead to preregistered milestone | Pre-origin gated sampled papers |
 | --- | --- | --- | --- | --- | --- |
