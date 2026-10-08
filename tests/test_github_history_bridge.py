@@ -196,6 +196,50 @@ class GitHubHistoryBridgeTests(unittest.TestCase):
             )
         self.assertEqual(2, manager.states[trend_id].observation_count)
 
+    def test_experimental_event_local_gate_accepts_explicit_lora_adapter(self):
+        manager, trend_id, observations = prepared()
+        bridge = GitHubHistoryBridge(
+            history_client=StubHistory(event()),
+            embed=lambda texts: [[1.0, 0.0] for _ in texts],
+            embedding_model=MODEL,
+            policy=GitHubBridgePolicy(experimental_event_local_threshold=0.425),
+        )
+        result = bridge.enrich(
+            manager=manager, trend_id=trend_id, observations_by_id=observations,
+            aliases=("lora",), distinctive_terms=("LoRA",), now=NOW,
+        )
+        self.assertEqual(1, len(result.accepted_event_ids))
+        self.assertTrue(result.accepted_observations[0]["quality_flags"]["experimental_event_local_gate"])
+        self.assertEqual(3, manager.states[trend_id].observation_count)
+
+    def test_experimental_event_local_gate_rejects_lora_radio_even_with_high_cosine(self):
+        manager, trend_id, observations = prepared()
+        radio_event = VerifiedGitEvent(
+            repository="microsoft/LoRA",
+            event_kind="commit",
+            external_id="radio123",
+            occurred_at="2020-01-01T00:00:00Z",
+            title="Add LoRa wireless sensor gateway",
+            evidence_text="Add LoRa wireless sensor network radio gateway support",
+            url="https://github.com/microsoft/LoRA/commit/radio123",
+            matched_terms=("lora",),
+            source_endpoint="GET /search/commits",
+        )
+        bridge = GitHubHistoryBridge(
+            history_client=StubHistory(radio_event),
+            embed=lambda texts: [[1.0, 0.0] for _ in texts],
+            embedding_model=MODEL,
+            policy=GitHubBridgePolicy(experimental_event_local_threshold=0.425),
+        )
+        before = manager.states[trend_id].to_dict()
+        result = bridge.enrich(
+            manager=manager, trend_id=trend_id, observations_by_id=observations,
+            aliases=("lora",), distinctive_terms=("LoRA",), now=NOW,
+        )
+        self.assertEqual((), result.accepted_event_ids)
+        self.assertEqual(1, len(result.rejected_event_ids))
+        self.assertEqual(before, manager.states[trend_id].to_dict())
+
     def test_aliases_required_and_cross_trend_ownership_fails_closed(self):
         manager, trend_id, observations = prepared()
         bridge = self.make_bridge()
