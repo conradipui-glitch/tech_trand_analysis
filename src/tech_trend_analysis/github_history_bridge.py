@@ -12,7 +12,8 @@ from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 
-from .backfill import gate_historical_vectors
+from .backfill import HistoricalGateResult, gate_historical_vectors
+from .github_event_local_gate import evaluate_event_local
 from .clustering import Microcluster, MicroclusteringResult, PROFILE_CONFIGS
 from .sources.github_history import GitHubHistoryClient, GitHubHistoryQuery
 from .trend_state import TrendStateManager, TrendStateUpdateResult
@@ -25,12 +26,15 @@ EmbeddingFn = Callable[[Sequence[str]], Sequence[Sequence[float]]]
 class GitHubBridgePolicy:
     max_repositories_per_trend: int = 10
     similarity_threshold: float = 0.82
+    experimental_event_local_threshold: float | None = None
 
     def __post_init__(self) -> None:
         if self.max_repositories_per_trend < 1:
             raise ValueError("max_repositories_per_trend must be >= 1")
         if not 0 < self.similarity_threshold <= 1:
             raise ValueError("similarity_threshold must be in (0, 1]")
+        if self.experimental_event_local_threshold is not None and not 0 < self.experimental_event_local_threshold <= 1:
+            raise ValueError("experimental_event_local_threshold must be in (0, 1]")
 
 
 @dataclass(frozen=True, slots=True)
@@ -165,18 +169,58 @@ class GitHubHistoryBridge:
 
         # The code path intentionally has NO TF-IDF fallback. If the embedding
         # model is unavailable or mismatched, fail instead of corrupting history.
-        texts = [_evidence_text(obs) for _, obs in events]
+        experimental = self.policy.experimental_event_local_threshold is not None
+        decisions = [
+            evaluate_event_local(
+                technology_direction=state.technology_direction,
+                title=obs["title"],
+                text=obs.get("text") or "",
+            )
+            for _, obs in events
+        ] if experimental else []
+        texts = [
+            (decision.evidence_span or _evidence_text(obs))
+            for (_, obs), decision in zip(events, decisions, strict=True)
+        ] if experimental else [_evidence_text(obs) for _, obs in events]
         vectors = np.asarray(self.embed(texts), dtype=np.float32)
         expected_dims = len(state.centroid)
         if vectors.shape != (len(events), expected_dims) or not np.isfinite(vectors).all():
             raise ValueError("embedder returned invalid shape or non-finite values")
         event_ids = [obs["observation_id"] for _, obs in events]
-        gated = gate_historical_vectors(
-            state,
-            observation_ids=event_ids,
-            vectors=vectors,
-            similarity_threshold=self.policy.similarity_threshold,
-        )
+        if experimental:
+            # Opt-in cross-modal research experiment only. This is distinct
+            # from the historical centroid gate and is NOT a universal MVP
+            # threshold; arbitrary technology families fail closed.
+            anchor = np.asarray(self.embed([state.technology_direction]), dtype=np.float32)
+            if anchor.shape != (1, expected_dims) or not np.isfinite(anchor).all():
+                raise ValueError("direction embedder returned invalid shape")
+            norms = np.linalg.norm(vectors, axis=1)
+            anchor_norm = float(np.linalg.norm(anchor[0]))
+            if anchor_norm == 0 or np.any(norms == 0):
+                raise ValueError("experimental vectors must be non-zero")
+            scores = (vectors @ anchor[0]) / (norms * anchor_norm)
+            similarities = {
+                obs_id: float(np.clip(score, -1, 1))
+                for obs_id, score in zip(event_ids, scores, strict=True)
+            }
+            passed = [
+                obs_id
+                for obs_id, decision in zip(event_ids, decisions, strict=True)
+                if decision.eligible and similarities[obs_id] >= self.policy.experimental_event_local_threshold
+            ]
+            accepted_ids = set(passed)
+            gated = HistoricalGateResult(
+                accepted_ids=tuple(passed),
+                rejected_ids=tuple(obs_id for obs_id in event_ids if obs_id not in accepted_ids),
+                similarities=similarities,
+            )
+        else:
+            gated = gate_historical_vectors(
+                state,
+                observation_ids=event_ids,
+                vectors=vectors,
+                similarity_threshold=self.policy.similarity_threshold,
+            )
 
         approved = set(gated.accepted_ids)
         clusters: list[Microcluster] = []
@@ -186,6 +230,9 @@ class GitHubHistoryBridge:
             event_id = observation["observation_id"]
             if event_id not in approved:
                 continue
+            if experimental:
+                observation["quality_flags"]["experimental_event_local_gate"] = True
+                observation["metrics"]["event_local_similarity_to_direction"] = gated.similarities[event_id]
             anchor = observations_by_id[anchor_id]
             # Identity routing uses the existing owned repository member.
             # Centroid uses ONLY the new event vector (not the old repo twice).
