@@ -15,6 +15,7 @@ from typing import Any, Mapping, Sequence
 from urllib.parse import quote
 
 from .github_event_local_gate import evaluate_event_local
+from .github_rename_lineage import trace_renamed_module
 from .sources.github_history import GitHubHistoryClient, VerifiedGitEvent
 
 _SOURCE = (".py", ".ts", ".tsx", ".js", ".jsx", ".rs", ".go", ".cpp", ".c", ".h")
@@ -59,6 +60,7 @@ class SupportingChangeResult:
     added_line_samples: tuple[str, ...] = ()
     original_anchor_timestamp: str | None = None
     candidate_timestamp: str | None = None
+    verified_renames: tuple[tuple[str, str, str], ...] = ()
 
     @property
     def supporting(self) -> bool:
@@ -122,6 +124,29 @@ class GitModuleLineageVerifier:
         if not isinstance(files, list):
             return reject("missing_immutable_candidate_files", "review_required")
 
+        # Current file path can diverge from the anchored path after a real
+        # GitHub rename. Never infer a rename from spelling similarity.
+        direct = any(
+            isinstance(file, dict) and (
+                file.get("filename") in paths
+                or (file.get("status") == "renamed" and file.get("previous_filename") in paths)
+            )
+            for file in files[:60]
+        )
+        allowed_paths = set(paths)
+        verified_renames: tuple[tuple[str, str, str], ...] = ()
+        if not direct:
+            resolution = trace_renamed_module(
+                self.client, repository=anchor.repository,
+                anchor_sha=anchor.external_id, candidate_sha=candidate.external_id,
+                anchor_time=anchor.occurred_at, candidate_time=candidate.occurred_at,
+                paths=paths,
+            )
+            if resolution.complete and resolution.steps:
+                allowed_paths = set(resolution.paths)
+                verified_renames = tuple(
+                    (step.sha, step.from_path, step.to_path) for step in resolution.steps
+                )
         matched_paths: list[str] = []
         samples: list[str] = []
         for item in files[:60]:
@@ -131,8 +156,8 @@ class GitModuleLineageVerifier:
             old_path = str(item.get("previous_filename") or "")
             # Follow only explicit same-SHA GitHub renames; don't infer
             # identity merely from similarity of filenames.
-            proven_rename = item.get("status") == "renamed" and old_path in paths
-            if not _source_file(new_path) or not (new_path in paths or proven_rename):
+            proven_rename = item.get("status") == "renamed" and old_path in allowed_paths
+            if not _source_file(new_path) or not (new_path in allowed_paths or proven_rename):
                 continue
             patch = item.get("patch")
             if not isinstance(patch, str):
@@ -171,8 +196,10 @@ class GitModuleLineageVerifier:
             anchor_sha=anchor.external_id,
             candidate_sha=candidate.external_id,
             verdict="supporting",
-            reason="confirmed_ancestor_and_same_module_source_change",
+            reason=("confirmed_ancestor_and_bounded_rename_chain"
+                    if verified_renames else "confirmed_ancestor_and_same_module_source_change"),
             source_paths=tuple(dict.fromkeys(matched_paths)),
+            verified_renames=verified_renames,
             added_line_samples=tuple(samples[:8]),
             original_anchor_timestamp=anchor.occurred_at,
             candidate_timestamp=candidate.occurred_at,
