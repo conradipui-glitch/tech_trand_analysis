@@ -44,6 +44,8 @@ def mock_history(status="ahead", files=None, sha="b2"):
                      "patch": "@@ -1,2 +1,3 @@\n+tokenizer = load_fast_tokenizer(config)"},
                 ],
             })
+        if req.url.path == "/repos/example/ml-project/commits":
+            return httpx.Response(200, json=[])
         raise AssertionError(str(req.url))
     return GitHubHistoryClient(transport=httpx.MockTransport(handler), max_retries=0), calls
 
