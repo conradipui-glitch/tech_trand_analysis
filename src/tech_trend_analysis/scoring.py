@@ -346,6 +346,19 @@ def _confidence(
     return _clamp(confidence, 0.0, 1.0)
 
 
+def is_research_only(state: TrendState) -> bool:
+    """A research signal is not yet corroborated as an applied technology.
+
+    It remains eligible for ranking and investigation, but cannot claim the
+    verified 'emerging' or market-adoption lifecycle stage without applied
+    evidence. Do not use citations/volume to invent implementation.
+    """
+    present = {key for key, count in state.evidence_counts.items() if count > 0}
+    return "research" in present and not present.intersection(
+        {"patent", "implementation", "product", "adoption"}
+    )
+
+
 def _stage(
     state: TrendState,
     *,
@@ -355,6 +368,11 @@ def _stage(
 ) -> str:
     if total < 40.0:
         return "unknown"
+    if is_research_only(state):
+        # An actively accelerating scientific direction is still valuable as
+        # a watchlist hypothesis. A large volume of papers alone does not
+        # verify an applied technology's emergence or adoption.
+        return "weak_signal"
     has_market = bool({"product", "adoption"}.intersection(state.evidence_counts))
     if has_market and total >= 50.0 and maturity < 60.0:
         return "early_adoption"
