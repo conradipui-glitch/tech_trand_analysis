@@ -1,0 +1,363 @@
+{
+  "version": "0.1.0",
+  "frozen_at": "2026-10-09",
+  "source": "Actual public GitHub commits read and labeled before model evaluation, using commit message and changed-file lists.",
+  "directions": {
+    "lora_llm": "low-rank adaptation of large language models",
+    "rag": "retrieval augmented generation"
+  },
+  "selection_limitations": "Purposefully chosen mix of known implemented changes, documentation-only commits, and LoRa radio negatives. This is not random/blind external annotation; do not extrapolate 18-item metrics to production.",
+  "cases": [
+    {
+      "id": "lit-add",
+      "direction": "lora_llm",
+      "repository": "Lightning-AI/litgpt",
+      "sha": "a65d9c4b1fb297cce2dbe5416efce14174e7982e",
+      "date": "2023-03-29T19:21:06Z",
+      "title": "Add LoRA (#44)",
+      "text": "Add LoRA (#44)\n\nCo-authored-by: Adrian Wälchli <aedu.waelchli@gmail.com>\r\nCo-authored-by: Carlos Mocholí <carlossmocholi@gmail.com>",
+      "url": "https://github.com/Lightning-AI/litgpt/commit/a65d9c4b1fb297cce2dbe5416efce14174e7982e",
+      "expected": true,
+      "annotation": "New LoRA code in source files",
+      "changed_files": [
+        "lit_llama/lora.py",
+        "lit_llama/model.py"
+      ]
+    },
+    {
+      "id": "lit-finetune",
+      "direction": "lora_llm",
+      "repository": "Lightning-AI/litgpt",
+      "sha": "f808df1971cbac345b3d8de263a251374a53d5e9",
+      "date": "2023-03-29T20:13:16Z",
+      "title": "Alpaca finetuning with LoRA 1/n (#52)",
+      "text": "Alpaca finetuning with LoRA 1/n (#52)\n\nCo-authored-by: Luca Antiga <luca@lightning.ai>",
+      "url": "https://github.com/Lightning-AI/litgpt/commit/f808df1971cbac345b3d8de263a251374a53d5e9",
+      "expected": true,
+      "annotation": "LoRA finetuning implementation",
+      "changed_files": [
+        ".gitignore",
+        "README.md",
+        "finetune.py",
+        "lit_llama/lora.py",
+        "lit_llama/tokenizer.py",
+        "scripts/prepare_alpaca.py",
+        "train.py"
+      ]
+    },
+    {
+      "id": "lit-alpaca",
+      "direction": "lora_llm",
+      "repository": "Lightning-AI/litgpt",
+      "sha": "64b9eaeab481b30071f4a24e297275c72da5419a",
+      "date": "2023-03-30T14:03:49Z",
+      "title": "Alpaca LoRA finetuning (2/n) (#59)",
+      "text": "Alpaca LoRA finetuning (2/n) (#59)",
+      "url": "https://github.com/Lightning-AI/litgpt/commit/64b9eaeab481b30071f4a24e297275c72da5419a",
+      "expected": true,
+      "annotation": "LoRA finetuning workflow",
+      "changed_files": [
+        ".gitignore",
+        "README.md",
+        "finetune.py",
+        "scripts/prepare_alpaca.py"
+      ]
+    },
+    {
+      "id": "lit-fix-rope",
+      "direction": "lora_llm",
+      "repository": "Lightning-AI/litgpt",
+      "sha": "ac83160ecaf9e0e55e0cb8fdbbd466d774c0a2f8",
+      "date": "2023-04-03T09:14:04Z",
+      "title": "Fix rope in LoRA-CausalSelfAttention (#85)",
+      "text": "Fix rope in LoRA-CausalSelfAttention (#85)",
+      "url": "https://github.com/Lightning-AI/litgpt/commit/ac83160ecaf9e0e55e0cb8fdbbd466d774c0a2f8",
+      "expected": true,
+      "annotation": "LoRA attention source fix",
+      "changed_files": [
+        "lit_llama/lora.py",
+        "lit_llama/model.py",
+        "tests/test_lora.py"
+      ]
+    },
+    {
+      "id": "uns-fix",
+      "direction": "lora_llm",
+      "repository": "unslothai/unsloth",
+      "sha": "45fa4bf3561018402e5dfaf2c3a4e3ad22cae5de",
+      "date": "2024-01-06T08:13:39Z",
+      "title": "Fix tokenizer, bias, dropout supported for LoRA (#69)",
+      "text": "Fix tokenizer, bias, dropout supported for LoRA (#69)\n\n* Fix tokenizer, dropout, bias for LoRA\r\n\r\n* Update loader.py",
+      "url": "https://github.com/unslothai/unsloth/commit/45fa4bf3561018402e5dfaf2c3a4e3ad22cae5de",
+      "expected": true,
+      "annotation": "LoRA dropout bias implementation fix",
+      "changed_files": [
+        "README.md",
+        "unsloth/models/_utils.py",
+        "unsloth/models/llama.py",
+        "unsloth/models/loader.py"
+      ]
+    },
+    {
+      "id": "lc-kendra",
+      "direction": "rag",
+      "repository": "langchain-ai/langchain",
+      "sha": "b1de927f1b938720fd03857b2fb10b350b619f24",
+      "date": "2023-06-23T21:59:35Z",
+      "title": "Kendra retriever api (#6616)",
+      "text": "Kendra retriever api (#6616)\n\n## Description\r\nReplaces [Kendra\r\nRetriever](https://github.com/hwchase17/langchain/blob/master/langchain/retrievers/aws_kendra_index_retriever.py)\r\nwith an updated version that uses the new [retriever\r\nAPI](https://docs.aws.amazon.com/kendra/latest/dg/searching-retrieve.html)\r\nwhich is better suited for retrieval augmented generation (RAG) systems.\r\n\r\n**Note**: This change requires the latest version (1.26.159) of boto3 to\r\nwork. `pip install -U boto3` to upgrade the boto3 version.\r\n\r\ncc @hupe1980\r\ncc @dev2049",
+      "url": "https://github.com/langchain-ai/langchain/commit/b1de927f1b938720fd03857b2fb10b350b619f24",
+      "expected": true,
+      "annotation": "Retriever API tailored to RAG systems",
+      "changed_files": [
+        "docs/extras/modules/data_connection/retrievers/integrations/amazon_kendra_retriever.ipynb",
+        "langchain/retrievers/__init__.py",
+        "langchain/retrievers/aws_kendra_index_retriever.py",
+        "langchain/retrievers/kendra.py"
+      ]
+    },
+    {
+      "id": "lc-docs",
+      "direction": "rag",
+      "repository": "langchain-ai/langchain",
+      "sha": "985873c49715d3b03eeede245f25eec500470339",
+      "date": "2023-08-25T18:27:27Z",
+      "title": "Update RAG use case (move to ntbk) (#9340)",
+      "text": "Update RAG use case (move to ntbk) (#9340)",
+      "url": "https://github.com/langchain-ai/langchain/commit/985873c49715d3b03eeede245f25eec500470339",
+      "expected": false,
+      "annotation": "Notebook documentation only",
+      "changed_files": [
+        "docs/extras/use_cases/question_answering/how_to/local_retrieval_qa.ipynb",
+        "docs/extras/use_cases/question_answering/index.mdx",
+        "docs/extras/use_cases/question_answering/question_answering.ipynb"
+      ]
+    },
+    {
+      "id": "lc-neo4j",
+      "direction": "rag",
+      "repository": "langchain-ai/langchain",
+      "sha": "db13fba7ea28131a296d3f898b92cf9d1d27ba79",
+      "date": "2023-08-29T14:54:20Z",
+      "title": "Add neo4j vector support (#9770)",
+      "text": "Add neo4j vector support (#9770)\n\nNeo4j has added vector index integration just recently. To allow both\r\ningestion and integrating it as vector RAG applications, I wrapped it as\r\na vector store as the implementation is completely different from\r\n`GraphCypherQAChain`. Here, we are not generating any Cypher statements\r\nat query time, we are simply doing the vector similarity search using\r\nthe new vector index as if we were dealing with a vector database.\r\n\r\n---------\r\n\r\nCo-authored-by: Bagatur <baskaryan@gmail.com>",
+      "url": "https://github.com/langchain-ai/langchain/commit/db13fba7ea28131a296d3f898b92cf9d1d27ba79",
+      "expected": true,
+      "annotation": "Neo4j vector store for RAG applications",
+      "changed_files": [
+        "docs/extras/integrations/vectorstores/neo4jvector.ipynb",
+        "libs/langchain/langchain/vectorstores/__init__.py",
+        "libs/langchain/langchain/vectorstores/neo4j_vector.py",
+        "libs/langchain/tests/integration_tests/vectorstores/docker-compose/neo4j.yml",
+        "libs/langchain/tests/integration_tests/vectorstores/test_neo4jvector.py"
+      ]
+    },
+    {
+      "id": "lc-kay",
+      "direction": "rag",
+      "repository": "langchain-ai/langchain",
+      "sha": "89ef440c14634e74bae069925ef75d3ff4b12445",
+      "date": "2023-09-25T20:10:13Z",
+      "title": "Kay retriever (#10657)",
+      "text": "Kay retriever (#10657)\n\n- **Description**: Adding retrievers for [kay.ai](https://kay.ai) and\r\nSEC filings powered by Kay and Cybersyn. Kay provides context as a\r\nservice: it's an API built for RAG.\r\n- **Issue**: N/A\r\n- **Dependencies**: Just added a dep to the\r\n[kay](https://pypi.org/project/kay/) package\r\n- **Tag maintainer**: @baskaryan @hwchase17 Discussed in slack\r\n- **Twtter handle:** [@vishalrohra_](https://twitter.com/vishalrohra_)\r\n\r\n---------\r\n\r\nCo-authored-by: Bagatur <baskaryan@gmail.com>",
+      "url": "https://github.com/langchain-ai/langchain/commit/89ef440c14634e74bae069925ef75d3ff4b12445",
+      "expected": true,
+      "annotation": "New RAG-oriented Kay retriever integration",
+      "changed_files": [
+        "docs/extras/integrations/document_loaders/aws_s3_directory.ipynb",
+        "docs/extras/integrations/document_loaders/aws_s3_file.ipynb",
+        "docs/extras/integrations/memory/dynamodb_chat_message_history.ipynb",
+        "docs/extras/integrations/retrievers/kay.ipynb",
+        "docs/extras/integrations/retrievers/pubmed.ipynb",
+        "docs/extras/integrations/retrievers/sec_filings.ipynb",
+        "docs/extras/use_cases/web_scraping.ipynb",
+        "libs/langchain/langchain/retrievers/__init__.py",
+        "libs/langchain/langchain/retrievers/kay.py",
+        "libs/langchain/tests/integration_tests/retrievers/test_kay.py"
+      ]
+    },
+    {
+      "id": "li-kg-engine",
+      "direction": "rag",
+      "repository": "run-llama/llama_index",
+      "sha": "32fc54410d6f73ccb47ab5ed6c2244719ee4ccdb",
+      "date": "2023-08-16T03:59:07Z",
+      "title": "feat: KG RAG query engine, enable Graph RAG on existing KGs (#7204)",
+      "text": "feat: KG RAG query engine, enable Graph RAG on existing KGs (#7204)",
+      "url": "https://github.com/run-llama/llama_index/commit/32fc54410d6f73ccb47ab5ed6c2244719ee4ccdb",
+      "expected": true,
+      "annotation": "New knowledge graph RAG query engine",
+      "changed_files": [
+        "CHANGELOG.md",
+        "docs/api_reference/query/query_engines/knowledge_graph_rag_query_engine.rst",
+        "docs/core_modules/query_modules/retriever/modules.md",
+        "docs/examples/query_engine/knowledge_graph_query_engine.ipynb",
+        "docs/examples/query_engine/knowledge_graph_rag_query_engine.ipynb",
+        "llama_index/graph_stores/nebulagraph.py",
+        "llama_index/indices/knowledge_graph/__init__.py",
+        "llama_index/indices/knowledge_graph/base.py",
+        "llama_index/indices/knowledge_graph/retriever.py",
+        "llama_index/indices/knowledge_graph/retrievers.py",
+        "llama_index/query_engine/__init__.py",
+        "llama_index/query_engine/knowledge_graph_query_engine.py",
+        "llama_index/retrievers/__init__.py",
+        "tests/indices/knowledge_graph/test_retrievers.py"
+      ]
+    },
+    {
+      "id": "li-subgraph",
+      "direction": "rag",
+      "repository": "run-llama/llama_index",
+      "sha": "b7c4906352446557a21e9d01e072759d66643439",
+      "date": "2023-08-24T01:36:00Z",
+      "title": "feat: direction-wise SubGraph RAG (#7378)",
+      "text": "feat: direction-wise SubGraph RAG (#7378)",
+      "url": "https://github.com/run-llama/llama_index/commit/b7c4906352446557a21e9d01e072759d66643439",
+      "expected": true,
+      "annotation": "SubGraph RAG source code changes",
+      "changed_files": [
+        "CHANGELOG.md",
+        "llama_index/graph_stores/kuzu.py",
+        "llama_index/graph_stores/nebulagraph.py",
+        "llama_index/graph_stores/simple.py",
+        "llama_index/indices/knowledge_graph/retrievers.py",
+        "tests/indices/knowledge_graph/test_retrievers.py"
+      ]
+    },
+    {
+      "id": "li-heterograph",
+      "direction": "rag",
+      "repository": "run-llama/llama_index",
+      "sha": "22506232762d3e237037158809b1ff0d30664b16",
+      "date": "2023-08-30T15:09:10Z",
+      "title": "feat: non-kg heterogeneous graph support in Graph RAG (#7459)",
+      "text": "feat: non-kg heterogeneous graph support in Graph RAG (#7459)",
+      "url": "https://github.com/run-llama/llama_index/commit/22506232762d3e237037158809b1ff0d30664b16",
+      "expected": true,
+      "annotation": "Graph RAG heterogeneous graph support",
+      "changed_files": [
+        "docs/examples/query_engine/knowledge_graph_rag_query_engine.ipynb",
+        "llama_index/graph_stores/falkordb.py",
+        "llama_index/graph_stores/kuzu.py",
+        "llama_index/graph_stores/nebulagraph.py",
+        "llama_index/graph_stores/neo4j.py",
+        "llama_index/graph_stores/simple.py",
+        "llama_index/graph_stores/types.py",
+        "llama_index/indices/knowledge_graph/retrievers.py"
+      ]
+    },
+    {
+      "id": "li-guide",
+      "direction": "rag",
+      "repository": "run-llama/llama_index",
+      "sha": "936e8da3da07e98de11a48728907b09813dbc23",
+      "date": "2023-08-30T17:58:52Z",
+      "title": "rag guide (#7480)",
+      "text": "rag guide (#7480)",
+      "url": "https://github.com/run-llama/llama_index/commit/936e8da3da07e98de11a48728907b09813dbc23b",
+      "expected": false,
+      "annotation": "Only RAG guide / documentation",
+      "changed_files": [
+        "docs/_static/production_rag/decouple_chunks.png",
+        "docs/_static/production_rag/doc_agents.png",
+        "docs/_static/production_rag/joint_qa_summary.png",
+        "docs/_static/production_rag/structured_retrieval.png",
+        "docs/end_to_end_tutorials/dev_practices/production_rag.md",
+        "docs/end_to_end_tutorials/principled_dev_practices.md"
+      ]
+    },
+    {
+      "id": "radio-spi",
+      "direction": "lora_llm",
+      "repository": "sandeepmistry/arduino-LoRa",
+      "sha": "ee096727594b7121c4df02927646107d5c360039",
+      "date": "2017-03-12T19:45:21Z",
+      "title": "Add LoRA.setSPIFrequency(frequency) API (#5)",
+      "text": "Add LoRA.setSPIFrequency(frequency) API (#5)",
+      "url": "https://github.com/sandeepmistry/arduino-LoRa/commit/ee096727594b7121c4df02927646107d5c360039",
+      "expected": false,
+      "annotation": "LoRa physical radio API not LLM adaptation",
+      "changed_files": [
+        "API.md",
+        "keywords.txt",
+        "src/LoRa.cpp",
+        "src/LoRa.h"
+      ]
+    },
+    {
+      "id": "radio-pin",
+      "direction": "lora_llm",
+      "repository": "sandeepmistry/arduino-LoRa",
+      "sha": "9c9914a2c46a94ad5ac04353ceb6b018254f914e",
+      "date": "2017-03-12T20:17:13Z",
+      "title": "Add option to specify PA output pin in Lora.setTxPower(...) (#2)",
+      "text": "Add option to specify PA output pin in Lora.setTxPower(...) (#2)",
+      "url": "https://github.com/sandeepmistry/arduino-LoRa/commit/9c9914a2c46a94ad5ac04353ceb6b018254f914e",
+      "expected": false,
+      "annotation": "LoRa physical radio output pin",
+      "changed_files": [
+        "API.md",
+        "keywords.txt",
+        "src/LoRa.cpp",
+        "src/LoRa.h"
+      ]
+    },
+    {
+      "id": "radio-merge",
+      "direction": "lora_llm",
+      "repository": "sandeepmistry/arduino-LoRa",
+      "sha": "1bb95fdd3d1f4cbc6dd26f9b76a61e340c3b98c5",
+      "date": "2018-03-19T13:46:29Z",
+      "title": "Merge branch 'master' of git://github.com/sandeepmistry/arduino-LoRa",
+      "text": "Merge branch 'master' of git://github.com/sandeepmistry/arduino-LoRa",
+      "url": "https://github.com/sandeepmistry/arduino-LoRa/commit/1bb95fdd3d1f4cbc6dd26f9b76a61e340c3b98c5",
+      "expected": false,
+      "annotation": "LoRa physical radio code merge",
+      "changed_files": [
+        "src/LoRa.cpp",
+        "src/LoRa.h"
+      ]
+    },
+    {
+      "id": "radio-fix",
+      "direction": "lora_llm",
+      "repository": "sandeepmistry/arduino-LoRa",
+      "sha": "039b138d8006ecf66953deafb8fe9478a0a66b35",
+      "date": "2018-05-07T17:02:06Z",
+      "title": "Add support for Arduino MKR WAN 1300 boards (#105)",
+      "text": "Add support for Arduino MKR WAN 1300 boards (#105)\n\n* Add support for Arduino MKR WAN 1300 board\r\n* Add new LoRa.setSPI(...) API to use radio with a different SPI interface\r\n* Disable LoRa.onReceive(...) and LoRa.receive() on Arduino MKR WAN 1300\r\n* Add errors on sketches not compatible with the Arduino MKR WAN 1300",
+      "url": "https://github.com/sandeepmistry/arduino-LoRa/commit/039b138d8006ecf66953deafb8fe9478a0a66b35",
+      "expected": false,
+      "annotation": "LoRa radio hardware repository",
+      "changed_files": [
+        ".travis.yml",
+        "API.md",
+        "README.md",
+        "examples/LoRaDuplexCallback/LoRaDuplexCallback.ino",
+        "examples/LoRaReceiverCallback/LoRaReceiverCallback.ino",
+        "src/LoRa.cpp",
+        "src/LoRa.h"
+      ]
+    },
+    {
+      "id": "radio-kw",
+      "direction": "lora_llm",
+      "repository": "sandeepmistry/arduino-LoRa",
+      "sha": "07bfead143cf617b76e19d40a291dffb5c7e3685",
+      "date": "2018-08-19T13:53:52Z",
+      "title": "Add function to invert IQ signal register (#179)",
+      "text": "Add function to invert IQ signal register (#179)\n\nAdd function to change register (REG_INVERTIQ) to support communication node and gateway\r\n\r\nThe register does not exist in datasheet but use on but used in Semtech code.\r\nReference : https://github.com/intel-iot-devkit/upm/blob/master/src/sx1276/sx1276.cxx\r\n\r\n* Add LoRa Simple Gateway/Node Exemple\r\n\r\nExample how to use InvertIQ function to create a simple Gateway/Node logic.",
+      "url": "https://github.com/sandeepmistry/arduino-LoRa/commit/07bfead143cf617b76e19d40a291dffb5c7e3685",
+      "expected": false,
+      "annotation": "LoRa radio hardware repository",
+      "changed_files": [
+        "API.md",
+        "examples/LoRaSimpleGateway/LoRaSimpleGateway.ino",
+        "examples/LoRaSimpleNode/LoRaSimpleNode.ino",
+        "keywords.txt",
+        "src/LoRa.cpp",
+        "src/LoRa.h"
+      ]
+    }
+  ]
+}
