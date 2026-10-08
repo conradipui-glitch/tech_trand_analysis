@@ -56,7 +56,7 @@ class SourceRouterTests(unittest.TestCase):
                 self.assertTrue({p.provider for p in route.collectable_providers}.issubset(
                     {p.provider for p in route.enabled_providers}
                 ))
-                self.assertEqual("adapter_and_credentials_missing",
+                self.assertEqual("credentials_missing",
                                  next(p.execution_status for p in route.providers if p.provider == "epo_ops"))
                 self.assertEqual("adapter_missing",
                                  next(p.execution_status for p in route.providers if p.provider == "huggingface"))
