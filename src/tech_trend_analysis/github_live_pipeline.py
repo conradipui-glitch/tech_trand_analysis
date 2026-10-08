@@ -35,6 +35,7 @@ class GitHubPipelineOutput:
     rejected_event_count: int
     observations: tuple[dict[str, Any], ...]
     trend_states: tuple[dict[str, Any], ...]
+    history_checks: tuple[dict[str, Any], ...] = ()
 
     def summary(self) -> dict[str, Any]:
         return {
@@ -48,6 +49,7 @@ class GitHubPipelineOutput:
             "rejected_event_count": self.rejected_event_count,
             "status": "detector_evidence_snapshot_not_top15",
             "historical_policy": "verified_git_event_and_semantic_gate_only",
+            "history_checks": list(self.history_checks),
             "trends": [
                 {
                     "trend_id": state["trend_id"],
@@ -136,6 +138,7 @@ def run_github_pipeline(
         ),
     )
     checked = verified = accepted = rejected = 0
+    audit: list[dict[str, Any]] = []
     # Historical verification depends on already formed, persistent trend identity.
     for trend_id in sorted(manager.states):
         result = bridge.enrich(
@@ -151,6 +154,27 @@ def run_github_pipeline(
         verified += len(result.verified_event_ids)
         accepted += len(result.accepted_event_ids)
         rejected += len(result.rejected_event_ids)
+        accepted_set = set(result.accepted_event_ids)
+        for observation in result.verified_observations:
+            event_id = observation["observation_id"]
+            audit.append({
+                "trend_id": trend_id,
+                "repository": observation["relationships"][0]["target_id"],
+                "event_id": event_id,
+                "event_kind": observation["artifact_kind"],
+                "occurred_at": observation["published_at"],
+                "title": observation["title"],
+                "source_url": observation["canonical_url"],
+                "evidence_text": (observation.get("text") or "")[:1000],
+                "similarity": round(result.similarities[event_id], 5),
+                "decision": "accepted" if event_id in accepted_set else "rejected_by_semantic_gate",
+            })
+        for repository in result.repositories_without_event:
+            audit.append({
+                "trend_id": trend_id,
+                "repository": f"github:{repository}",
+                "decision": "no_text_verified_git_event",
+            })
         for observation in result.accepted_observations:
             by_id[observation["observation_id"]] = observation
 
@@ -165,4 +189,5 @@ def run_github_pipeline(
         rejected_event_count=rejected,
         observations=tuple(by_id[key] for key in sorted(by_id)),
         trend_states=tuple(manager.states[key].to_dict() for key in sorted(manager.states)),
+        history_checks=tuple(audit),
     )
