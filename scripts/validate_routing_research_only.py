@@ -99,6 +99,8 @@ def main() -> None:
                     "sampled_count": gate.sample_count,
                     "accepted_sample_count": gate.matched_sample_count,
                     "estimated_cluster_conditioned_count": gate.estimated_count,
+                    "grounded_sample_count": gate.grounded_sample_count,
+                    "estimated_search_volume_is_scoring_evidence": False,
                     "method": "OpenAlex title-only sample gate; not census and not proof of first technology occurrence",
                     "sample": [
                         {"id": item.get("id"), "title": item.get("title"), "accepted": index in gate.accepted_indices}
