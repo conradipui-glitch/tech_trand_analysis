@@ -1,4 +1,4 @@
-version: 0.3.0
+version: 0.3.1
 
 # Source registry + collection routing. `collection_priority` controls what to
 # collect first; it is NOT an Emerging Trend Score weight.
@@ -27,7 +27,7 @@ providers:
     evidence_type: patent
     adapter: tech_trend_analysis.sources.epo_ops.EPOOPSAdapter
     default_role: discovery
-    execution_status: adapter_and_credentials_missing
+    execution_status: credentials_missing
 
   reports:
     evidence_type: analysis
