@@ -28,12 +28,17 @@ class SampleGateResult:
     similarities: tuple[float, ...]
     anchor_coverages: tuple[float, ...]
 
+    @property
+    def grounded_sample_count(self) -> int:
+        return min(self.raw_count, self.matched_sample_count)
+
     def to_dict(self) -> dict[str, object]:
         return {
             "raw_count": self.raw_count,
             "sample_count": self.sample_count,
             "matched_sample_count": self.matched_sample_count,
             "estimated_count": self.estimated_count,
+            "grounded_sample_count": self.grounded_sample_count,
             "sample_precision": round(self.sample_precision, 4),
             "accepted_indices": list(self.accepted_indices),
             "similarities": [round(value, 4) for value in self.similarities],
