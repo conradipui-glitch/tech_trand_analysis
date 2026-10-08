@@ -57,3 +57,28 @@ Output: `observations.jsonl`, `trend_states.json`, `summary.json`. Save secrets 
 ## Next gate
 
 One bounded combined live pilot using the same embedding model (`BAAI/bge-m3`) on 5–10 repositories; inspect accepted/rejected matches manually, verify temporal chronology and source/actor dedup policy before letting results affect TOP-15 ranking.
+
+
+## 2026-10-08 live CPU/BGE-M3 calibration findings
+
+**Actual pipeline execution succeeded** in GitHub Actions, with no paid model API.
+
+- Run `37822672120`, RAG: six present-day repositories, two microclusters, two repositories checked, **zero text-verified events**. Sorting by `updated` overrepresented new 2025–2026 repos. This is discovery bias, not evidence that no older implementations exist.
+- Run `37823051497`, LoRA: six well-known repositories, five microclusters, five repositories checked, **four text-verified dated events, zero accepted** by `gate_historical_vectors()`.
+- Run `37823436080` reproduced LoRA findings with evidence text, URLs, cosine and decisions saved as `history_checks.json` (Actions artifact `github-live-lora-audit`).
+- All regular Python integration/unit CI checks remained green. This proves execution and fail-closed behavior, not detector usefulness.
+
+Observed real BGE-M3 cosine values with **existing repository-desc-based centroid** and **Git event text**:
+
+| Repository | Event / interpretation | Event timestamp | Cosine | Decision |
+| --- | --- | --- | ---: | --- |
+| `modelscope/ms-swift` | `Fix bug: LoRA not work with diffusers>0.20.0` — image/diffusers context | 2023-09-19 | 0.39152 | reject |
+| `lyogavin/airllm` | `streamed LoRA training for Qwen3.8` — likely relevant to LLM LoRA | 2026-09-05 | 0.49934 | reject |
+| `huggingface/peft` | `modules_to_save to LoraConfig` — relevant | 2023-02-01 | 0.48354 | reject |
+| `hiyouga/LlamaFactory` | `FlashAttention-2 and Baichuan2` release — likely adjacent, not a LoRA-introduction event | 2023-09-11 | 0.51946 | reject |
+
+**Implication:** the `0.82` centroid similarity threshold was developed for same-style history and is NOT validated for cross-modal repository-description ↔ Git-message pairs. Merely lowering it below 0.5 would accept some relevant evidence *and* risk accepting off-topic release evidence, as seen above. Do not tune on these four samples alone.
+
+**Next calibration gate:** freeze a labeled multi-repository event corpus (commit, release, tag, including ambiguous `LoRA` vs `LoRa` and unrelated changelog mentions); evaluate event-local evidence snippets and cross-modal embedding criteria separately from the same-style OpenAlex centroid gate. Preserve event links/dated provenance and require explicit false-positive performance before injecting these events into score. One lexical-history miss was also observed: generic `LoRA` context did not rediscover PEFT's known earlier `add lora support` commit (2022-11-30); repository-specific safe contextual query policy needs testing before claiming earliest implementation.
+
+**Status after pilot:** bridge code is complete and reproducibly exercised. It has not yet produced a trustworthy, chronologically enriched **live** TrendState from arbitrary discovery. Therefore this is still a validation-stage pipeline, not a completed TOP-15 service.
