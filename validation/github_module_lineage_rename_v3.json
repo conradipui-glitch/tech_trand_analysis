@@ -1,0 +1,100 @@
+{
+  "version": "0.2.0",
+  "frozen_at": "2026-10-09",
+  "scope": "B-045: repeat B-044 9 already-known ancestry cases as regression, plus 2 NEW LoRa-radio negative cases before running rename-chain solver.",
+  "method": "Mostly prior disclosed examples: 9 original B-044 pairs (NOT fresh holdout) + 2 new real LoRa-radio negatives; author-labeled before current run. Diagnostic regression, not statistically independent blind validation.",
+  "technology_direction": "low-rank adaptation of large language models",
+  "anchors": [
+    {
+      "repo": "huggingface/trl",
+      "sha": "b60ce797d8eed012323a83411335399f9f5338de",
+      "event_date": "2024-08-06T16:02:59Z",
+      "cases": [
+        {
+          "sha": "375b3ebc85fd75f25fcadb74b37057040ef344c7",
+          "expected": true,
+          "notes": "Later LoRA target-parameters source code in same generic trainer utils module"
+        },
+        {
+          "sha": "d45eaab3af6ab8c80a7c5b65df607a5152ed0f77",
+          "expected": false,
+          "notes": "Unrelated vLLM quantization in same shared module"
+        },
+        {
+          "sha": "814012959506bf315cb9b3bbc8bd6570b3255997",
+          "expected": false,
+          "notes": "Older documentation-only change"
+        }
+      ]
+    },
+    {
+      "repo": "tloen/alpaca-lora",
+      "sha": "26f64780ad7f18a6a0ec24be044f703b8d65d16f",
+      "event_date": "2023-03-13T21:34:26Z",
+      "cases": [
+        {
+          "sha": "2d719c11cf2fae7ba5802adc9161986ca6c5508b",
+          "expected": true,
+          "notes": "LoRA PEFT adapter checkpoint restore in same finetune source file"
+        },
+        {
+          "sha": "65fb8225c09af81feb5edb1abb12560f02930703",
+          "expected": false,
+          "notes": "Lint only, not an executable LoRA feature change"
+        },
+        {
+          "sha": "179f3974f833b6e6c24e1340fd1c0786c0ba8450",
+          "expected": false,
+          "notes": "Training label length fix, unrelated to LoRA module change despite same file"
+        }
+      ]
+    },
+    {
+      "repo": "huggingface/peft",
+      "sha": "e8160370247b3b61f57e59eb3f49acf9e3618b4b",
+      "event_date": "2022-11-30T09:21:26Z",
+      "cases": [
+        {
+          "sha": "d04f6661eec9dc2811cabe6c4405e64a9d49a07f",
+          "expected": true,
+          "notes": "LoRAConfig improvement after project source-directory migration. May require verified multi-commit rename lineage (anticipated miss)."
+        },
+        {
+          "sha": "814012959506bf315cb9b3bbc8bd6570b3255997",
+          "repository": "huggingface/trl",
+          "expected": false,
+          "notes": "Cross-repository, documentation-only older event"
+        },
+        {
+          "sha": "e8160370247b3b61f57e59eb3f49acf9e3618b4b",
+          "expected": false,
+          "notes": "Same SHA as anchor; replay is not new development"
+        }
+      ]
+    },
+    {
+      "repo": "jgromes/RadioLib",
+      "sha": "dda6db124c6978bc8ffd398488ec3c3f05191eae",
+      "event_date": "2018-03-09T10:13:26Z",
+      "cases": [
+        {
+          "sha": "8d8ab76f5ab47beb7e6d7fc5f685da1e27ecfc2f",
+          "expected": false,
+          "notes": "LoRa SX127x radio chipset support is not LoRA language model adaptation"
+        }
+      ]
+    },
+    {
+      "repo": "Lora-net/LoRaMac-node",
+      "sha": "263d611b4f82da117301027c6feb1bc4443e6efe",
+      "event_date": "2016-09-22T15:47:52Z",
+      "cases": [
+        {
+          "sha": "79c2d314b99057f32ee648eab1e681afcbe3dbc9",
+          "expected": false,
+          "notes": "LoRaWAN MAC transmit delay is radio protocol, not LLM LoRA"
+        }
+      ]
+    }
+  ]
+}
