@@ -1,0 +1,36 @@
+name: github-module-lineage-rename-v3
+
+on:
+  push:
+    paths:
+      - '.github/workflows/github-module-lineage-rename-v3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  renamed-module:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deterministic Python dependencies
+        run: python -m pip install -e .
+      - name: Verify PET to PEFT Git rename plus cross-repo negatives
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LINEAGE_CASE_FILE: validation/github_module_lineage_rename_v3.json
+          LINEAGE_OUTPUT_FILE: validation/results/github_module_lineage_rename_v3.json
+        run: python scripts/evaluate_github_module_lineage_crossrepo.py
+      - name: Upload SHA-level source and rename proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-module-lineage-rename-v3
+          path: validation/results/github_module_lineage_rename_v3.json
+          if-no-files-found: warn
+          retention-days: 21
