@@ -35,7 +35,7 @@ def get_event(client: GitHubHistoryClient, repo: str, sha: str, *, source: bool)
 
 
 def main():
-    spec=json.loads(Path("validation/github_module_lineage_crossrepo_v2.json").read_text(encoding="utf-8"))
+    spec=json.loads(Path(os.getenv("LINEAGE_CASE_FILE", "validation/github_module_lineage_crossrepo_v2.json")).read_text(encoding="utf-8"))
     cases=[]
     with GitHubHistoryClient(token=os.getenv("GITHUB_TOKEN"), max_retries=3) as client:
         verifier=GitModuleLineageVerifier(client)
@@ -55,6 +55,7 @@ def main():
                     "expected":item["expected"],"actual":result.supporting,
                     "decision":result.verdict,"reason":result.reason,
                     "paths":list(result.source_paths),"samples":list(result.added_line_samples),
+                    "verified_renames":[{"sha":sha,"from":old,"to":new} for sha,old,new in result.verified_renames],
                     "url":candidate.url,
                 })
     tp=sum(1 for r in cases if r["expected"] and r["actual"])
@@ -67,7 +68,7 @@ def main():
         "limitations":"Hand-selected, tiny multi-repository first-pass validation; not blind generalization.",
         "score_integration":False,
     }
-    dest=Path("validation/results/github_module_lineage_crossrepo_v2.json")
+    dest=Path(os.getenv("LINEAGE_OUTPUT_FILE", "validation/results/github_module_lineage_crossrepo_v2.json"))
     dest.parent.mkdir(parents=True,exist_ok=True)
     dest.write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
     print(json.dumps({
