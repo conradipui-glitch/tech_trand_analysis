@@ -1,0 +1,71 @@
+{
+  "version": "0.1.0",
+  "frozen_at": "2026-10-09",
+  "label_scope": "Supporting activity in a previously identified technology module (not another adoption or a backdated first_seen).",
+  "selection": "Hand-selected real Git SHAs and labels from commit descriptions/diffs, before running ancestry+module gate. Small convenience pilot, NOT blind validation.",
+  "technology_direction": "low-rank adaptation of large language models",
+  "anchor": {
+    "repository": "huggingface/trl",
+    "sha": "b60ce797d8eed012323a83411335399f9f5338de",
+    "date": "2024-08-06T16:02:59Z",
+    "provenance": "Rank Stabilized LoRA implementation adds use_rslora in trainer/model_config.py and trainer/utils.py"
+  },
+  "cases": [
+    {
+      "id": "lora-utils-config",
+      "repository": "huggingface/trl",
+      "sha": "375b3ebc85fd75f25fcadb74b37057040ef344c7",
+      "date": "2025-11-21T00:42:45Z",
+      "expected": true,
+      "label_reason": "Same LoRA/PEFT config function in trl/trainer/utils.py adds lora_target_parameters"
+    },
+    {
+      "id": "unrelated-utils-vllm",
+      "repository": "huggingface/trl",
+      "sha": "d45eaab3af6ab8c80a7c5b65df607a5152ed0f77",
+      "date": "2025-11-14T11:12:09Z",
+      "expected": false,
+      "label_reason": "Unrelated vLLM quantization settings in shared trainer/utils.py"
+    },
+    {
+      "id": "unrelated-utils-dtype",
+      "repository": "huggingface/trl",
+      "sha": "799b39b86408bc8d356cd0fbd398741becdfd059",
+      "date": "2025-11-12T23:21:05Z",
+      "expected": false,
+      "label_reason": "Unrelated default dtype and device_map in same shared trainer/utils.py"
+    },
+    {
+      "id": "unrelated-utils-model-id",
+      "repository": "huggingface/trl",
+      "sha": "d2e43152fb30c440312640975ea74d2d3b7dc640",
+      "date": "2025-11-26T14:40:15Z",
+      "expected": false,
+      "label_reason": "Reverted model ID fallback in generic utils.py, not LoRA"
+    },
+    {
+      "id": "older-lora-docs",
+      "repository": "huggingface/trl",
+      "sha": "814012959506bf315cb9b3bbc8bd6570b3255997",
+      "date": "2023-12-15T10:24:20Z",
+      "expected": false,
+      "label_reason": "Older than anchor and docs-only reward trainer change"
+    },
+    {
+      "id": "same-anchor",
+      "repository": "huggingface/trl",
+      "sha": "b60ce797d8eed012323a83411335399f9f5338de",
+      "date": "2024-08-06T16:02:59Z",
+      "expected": false,
+      "label_reason": "Same event, cannot add supporting adoption"
+    },
+    {
+      "id": "other-repository",
+      "repository": "microsoft/semantic-kernel",
+      "sha": "c6f783df4f9fb759e5e8fcf527e89a48704d23bc",
+      "date": "2023-07-03T17:28:49Z",
+      "expected": false,
+      "label_reason": "Different repository (also older)"
+    }
+  ]
+}
