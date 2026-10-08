@@ -154,6 +154,11 @@ def _score_independent_projection(state: TrendState) -> TrendState:
     baseline; new ingests always record a unit for each Observation.
     """
     if not state.independent_units:
+        if any(oid.startswith("github:") for oid in state.observation_ids):
+            raise ValueError(
+                "legacy GitHub TrendState lacks independent units; "
+                "re-ingest original Observations before score"
+            )
         return state
     units = tuple(state.independent_units.values())
     periods: dict[str, PeriodBucket] = {}
