@@ -30,13 +30,14 @@ def commit(sha, date, message):
     }
 
 
-def event(repo, name, date, message):
+def event(repo, name, date, message, source_diff=None):
     return VerifiedGitEvent(
         repository=repo, event_kind="commit", external_id=name,
         occurred_at=date, title=message.splitlines()[0],
         url=f"https://github.com/{repo}/commit/{name}",
         matched_terms=("lora",), source_endpoint="GET /search/commits",
         evidence_text=message,
+        source_diff=source_diff,
     )
 
 
@@ -73,11 +74,13 @@ class MultiEventApiTests(unittest.TestCase):
             candidates = client.candidate_events(QUERY, max_candidates=12,
                 commit_pages_per_term=2, max_diff_checks=4)
         self.assertEqual(["radio", "early", "later"], [e.external_id for e in candidates])
-        self.assertIn("GIT_PATCH_ADDED_LINES", candidates[1].evidence_text)
+        self.assertIn("LoRAConfig", candidates[1].source_diff)
+        self.assertNotIn("GIT_PATCH_ADDED_LINES", candidates[1].evidence_text)
         inspected = evaluate_event_local(
             technology_direction=QUERY.technology_direction,
             title=candidates[1].title,
             text=candidates[1].evidence_text,
+            source_diff=candidates[1].source_diff,
         )
         self.assertTrue(inspected.eligible)
         self.assertIn("LoRAConfig", inspected.evidence_span)
@@ -112,8 +115,8 @@ class MultiEventBridgeTests(unittest.TestCase):
                 return (
                     event(repo, "radio", "2020-01-01T00:00:00Z", "Add LoRa radio sensor gateway"),
                     event(repo, "early", "2022-11-30T09:21:26Z",
-                        "add lora support\nGIT_PATCH_ADDED_LINES\n"
-                        "FILE src/pet/tuners/lora.py\nfrom loralib import mark_only_lora_as_trainable\nLoRAConfig"),
+                        "add lora support", source_diff=
+                        "FILE src/pet/tuners/lora.py\n+from loralib import mark_only_lora_as_trainable\n+class LoRAConfig:"),
                     event(repo, "later", "2023-02-01T00:00:00Z",
                         "Implement LoRA adapters for transformer language models"),
                 )
