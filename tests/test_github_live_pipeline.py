@@ -92,6 +92,10 @@ class GitHubLivePipelineTests(unittest.TestCase):
         self.assertEqual(1, output.accepted_event_count)
         self.assertEqual(1, output.rejected_event_count)
         self.assertEqual(3, len(output.observations))
+        decisions = [row for row in output.history_checks if row["decision"] != "no_text_verified_git_event"]
+        self.assertEqual({"accepted", "rejected_by_semantic_gate"}, {x["decision"] for x in decisions})
+        self.assertEqual(2, len(decisions))
+        self.assertTrue(all(isinstance(x["similarity"], float) for x in decisions))
         self.assertEqual(1, len(output.trend_states))
         state = output.trend_states[0]
         self.assertEqual("2020-09-22T16:29:58Z", state["first_seen"])
