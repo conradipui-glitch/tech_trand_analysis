@@ -1,9 +1,6 @@
 name: github-live-pipeline-pilot
 
 on:
-  push:
-    paths:
-      - '.github/workflows/github-live-pipeline-pilot.yml'
   workflow_dispatch:
 
 permissions:
@@ -48,6 +45,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: github-live-lora-event-local-audit
-          path: validation/results/github-live-lora-audit/
+          path: validation/results/github-live-lora-event-local/
           if-no-files-found: warn
           retention-days: 14
