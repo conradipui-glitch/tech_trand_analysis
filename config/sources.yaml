@@ -1,32 +1,39 @@
-version: 0.2.0
+version: 0.3.0
 
 # Source registry + collection routing. `collection_priority` controls what to
 # collect first; it is NOT an Emerging Trend Score weight.
+# Profile `enabled: true` is a DESIRED provider policy, not proof that the
+# adapter is installed or authenticated. Check `execution_status` separately.
 providers:
   openalex:
     evidence_type: research
     adapter: tech_trend_analysis.sources.openalex.OpenAlexAdapter
     default_role: discovery_history
+    execution_status: ready
 
   github:
     evidence_type: implementation
     adapter: tech_trend_analysis.sources.github.GitHubAdapter
     default_role: discovery
+    execution_status: ready
 
   huggingface:
     evidence_type: implementation
     adapter: tech_trend_analysis.sources.huggingface.HuggingFaceAdapter
     default_role: discovery
+    execution_status: adapter_missing
 
   epo_ops:
     evidence_type: patent
     adapter: tech_trend_analysis.sources.epo_ops.EPOOPSAdapter
     default_role: discovery
+    execution_status: adapter_and_credentials_missing
 
   reports:
     evidence_type: analysis
     adapter: generic_web_or_pdf
     default_role: enrichment
+    execution_status: adapter_missing
 
 profiles:
   software_ai:
