@@ -146,6 +146,22 @@ class GitModuleLineageVerifier:
             ]
             if not executable:
                 continue
+            # A broad helper file (utils.py, config.py, qa.py) may serve
+            # unrelated features. Same filename alone must not certify a
+            # technology-specific maintenance change.
+            basename = new_path.rsplit("/", 1)[-1].casefold()
+            technology_file = (
+                bool(re.search(r"(?:lora|peft|adapter)", basename))
+                if "lora" in technology_direction.casefold() or "low-rank" in technology_direction.casefold()
+                else bool(re.search(r"(?:rag|retriev|vector|query)", basename))
+            )
+            family_lines = (
+                re.compile(r"(?i)lora|peft|adapter")
+                if "lora" in technology_direction.casefold() or "low-rank" in technology_direction.casefold()
+                else re.compile(r"(?i)rag|retriev|vector|embedding|knowledge.graph")
+            )
+            if not technology_file and not any(family_lines.search(line) for line in executable):
+                continue
             matched_paths.append(new_path)
             samples.extend(executable[:4])
         if not matched_paths:
