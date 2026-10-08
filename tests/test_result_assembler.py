@@ -93,6 +93,36 @@ class ResultAssemblerTests(unittest.TestCase):
         schema = json.loads(Path("schemas/trend-result.schema.json").read_text(encoding="utf-8"))
         Draft202012Validator(schema, format_checker=FormatChecker()).validate(result)
 
+    def test_b031_research_only_candidate_kept_but_not_declared_emerging(self):
+        state = self._state(
+            "trend:research-only", [1, 2, 4, 8, 13, 21],
+            first_seen="2026-03-01T00:00:00Z",
+        )
+        state.evidence_counts = {"research": 49}
+        state.provider_counts = {"openalex": 49}
+        state.first_evidence_at = {"research": "2026-03-01T00:00:00Z"}
+        state.actor_keys = {f"openalex:author:{i}" for i in range(14)}
+        oid, source = self._observation(
+            state, title="Rising research on agentic retrieval",
+            evidence_type="research",
+        )
+        result = assemble_trend_analysis(
+            technology_direction="AI agents",
+            source_profile="software_ai",
+            candidates=[state],
+            observations_by_id={oid: source},
+            as_of=date(2026, 8, 29),
+            generated_at="2026-08-29T20:00:00Z",
+        )
+        self.assertEqual(1, result["summary"]["trend_count"])
+        self.assertEqual("weak_signal", result["trends"][0]["stage"])
+        self.assertTrue(any("Research-only" in limitation
+                            for limitation in result["trends"][0]["limitations"]))
+        self.assertTrue(any("research-only" in warning
+                            for warning in result["summary"]["warnings"]))
+        schema = json.loads(Path("schemas/trend-result.schema.json").read_text(encoding="utf-8"))
+        Draft202012Validator(schema, format_checker=FormatChecker()).validate(result)
+
     def test_candidate_without_grounded_source_is_skipped_not_fabricated(self):
         state = self._state("trend:no-source", [1, 2, 3, 4, 5, 6], first_seen="2026-03-01T00:00:00Z")
         result = assemble_trend_analysis(
