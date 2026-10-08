@@ -9,6 +9,8 @@ from urllib.parse import quote
 
 import httpx
 
+from ..github_patch_evidence import extract_source_patch
+
 
 _TOKEN_RE = re.compile(r"(?u)\b[\w-]+\b")
 
@@ -49,6 +51,7 @@ class VerifiedGitEvent:
     matched_terms: tuple[str, ...]
     source_endpoint: str
     evidence_text: str | None = None
+    source_diff: str | None = None
 
     def to_observation(
         self,
@@ -228,30 +231,13 @@ class GitHubHistoryClient:
         return tuple(enriched)
 
     def _enrich_commit_patch(self, repository: str, event: VerifiedGitEvent) -> VerifiedGitEvent:
+        # Only the GitHub *same-SHA* commit details endpoint may populate this
+        # separate field. The event message is never allowed to forge patches.
         payload = self._get_json(f"/repos/{repository}/commits/{quote(event.external_id, safe='')}")
         if not isinstance(payload, dict) or not isinstance(payload.get("files"), list):
             return event
-        # Restrict to actual added lines in source files, avoiding removed or
-        # comment-only context and unrelated release note text.
-        snippets: list[str] = []
-        for item in payload["files"][:20]:
-            if not isinstance(item, dict):
-                continue
-            filename = str(item.get("filename") or "")
-            if not filename.endswith((".py", ".ts", ".tsx", ".js", ".rs", ".cpp", ".c", ".go")):
-                continue
-            patch = str(item.get("patch") or "")
-            added = [
-                line[1:].strip() for line in patch.splitlines()
-                if line.startswith("+") and not line.startswith("+++")
-                and any(token in line.casefold() for token in ("lora", "loralib", "ragretriever", "retrieval"))
-                and not line[1:].lstrip().startswith(("#", "//", "*"))
-            ]
-            if added:
-                snippets.append(f"FILE {filename}\n" + "\n".join(added[:8]))
-            if len(snippets) >= 3:
-                break
-        if not snippets:
+        diff = extract_source_patch(payload["files"])
+        if not diff:
             return event
         return VerifiedGitEvent(
             repository=event.repository,
@@ -262,7 +248,8 @@ class GitHubHistoryClient:
             url=event.url,
             matched_terms=event.matched_terms,
             source_endpoint=event.source_endpoint,
-            evidence_text=((event.evidence_text or event.title) + "\nGIT_PATCH_ADDED_LINES\n" + "\n".join(snippets))[:4000],
+            evidence_text=event.evidence_text,
+            source_diff=diff,
         )
 
     def _search_commits(
