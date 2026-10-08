@@ -41,12 +41,12 @@ jobs:
             --limit 6 \
             --max-history-per-cluster 1 \
             --model 'BAAI/bge-m3' \
-            --output-dir validation/results/github-live-pilot
+            --output-dir validation/results/github-live-lora-audit
       - name: Upload pilot observations and state snapshot
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: github-live-pipeline-pilot
-          path: validation/results/github-live-pilot/
+          name: github-live-lora-audit
+          path: validation/results/github-live-lora-audit/
           if-no-files-found: warn
           retention-days: 14
