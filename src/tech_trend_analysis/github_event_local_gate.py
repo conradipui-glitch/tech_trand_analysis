@@ -45,7 +45,8 @@ def event_family(technology_direction: str) -> str | None:
 
 
 def evaluate_event_local(
-    *, technology_direction: str, title: str, text: str
+    *, technology_direction: str, title: str, text: str,
+    source_diff: str | None = None,
 ) -> EventLocalGateDecision:
     family = event_family(technology_direction)
     if family is None:
@@ -89,27 +90,77 @@ def evaluate_event_local(
         if family == "lora_llm" and not _LORA_NAME.search(span):
             continue
         return EventLocalGateDecision("eligible", "local_technology_and_implementation_context", span[:1000])
-    # Strict fallback for a SHORT commit subject that was not independently
-    # descriptive: only same-SHA added source lines from GitHub commit diff
-    # may establish the missing technical context. No mutable repo metadata.
-    marker = "\nGIT_PATCH_ADDED_LINES\n"
-    if family == "lora_llm" and marker in text:
-        subject, patch = text.split(marker, 1)
-        subject = subject.splitlines()[0].strip()
-        if (
-            re.search(r"(?i)\b(?:add|implement|enable|introduce|support)\b.*\blora\b", subject)
-            and not _RADIO.search(subject)
-            and not re.search(r"\bLoRa\b", subject)
-            and re.search(r"(?m)^FILE [^\n]+\.(?:py|ts|tsx|js|rs|cpp|go)$", patch)
-            and re.search(r"(?i)\b(?:LoRAConfig|LoRAModel|loralib|mark_only_lora_as_trainable)\b", patch)
-        ):
-            # This is a composite of two independently dated pieces of the
-            # SAME commit: its authentic subject and its changed code lines.
-            relevant = [line for line in patch.splitlines() if re.search(
-                r"(?i)LoRAConfig|LoRAModel|loralib|mark_only_lora_as_trainable", line
-            )]
-            return EventLocalGateDecision(
-                "eligible", "same_commit_source_diff_confirms_lora_implementation",
-                (subject + "\n" + "\n".join(relevant[:3]))[:1000],
-            )
+    # Independently verified, same-SHA executable patch support can rescue a
+    # terse commit message. The text itself may NEVER provide these FILE lines.
+    # The client keeps source_diff as a separate field from GitHub commit files[].
+    if source_diff and not _REJECT_ACTION.search(title):
+        candidate = _evaluate_source_diff(family, title, source_diff)
+        if candidate is not None:
+            return candidate
     return EventLocalGateDecision("rejected", "no_event_local_implementation_evidence", None)
+
+
+_LORA_PATCH_SYMBOL = re.compile(
+    r"(?i)(?:\blora(?:config|model|lib|_?[a-z][a-z_]*|[A-Z][A-Za-z]*)\b|"
+    r"\bqlora\b|\bget_peft_model\b|\bmark_only_lora_as_trainable\b|"
+    r"\blow.rank\b)"
+)
+_RAG_PATCH_SYMBOL = re.compile(
+    r"(?i)(?:\brag(?:retriever|generator|queryengine|query_engine|_?[a-z_]+)\b|"
+    r"\bretrieval.augmented\b|\bgraph.rag\b)"
+)
+_RAG_RETRIEVE = re.compile(r"(?i)retriev|vector.search|embedding|knowledge.graph")
+_RAG_APPLY = re.compile(r"(?i)generat|query.engine|question.answer|llm|model|prompt|qa\b")
+
+
+def _evaluate_source_diff(
+    family: str,
+    title: str,
+    diff: str,
+) -> EventLocalGateDecision | None:
+    # Source markers are structural. Each accepted proof must use *added*
+    # executable code lines, never a path name or a removed/comment line.
+    # This function is called only with trusted same-SHA diff in a distinct field.
+    chunks = re.split(r"(?m)^FILE ", diff)
+    for chunk in chunks[1:]:
+        name, _, body = chunk.partition("\n")
+        if not name or not body:
+            continue
+        code = [line[1:].strip() for line in body.splitlines()
+                if line.startswith("+") and not line.startswith("+++")
+                and line[1:].strip() and not line[1:].lstrip().startswith(("#", "//", "*"))]
+        if not code:
+            continue
+        if family == "lora_llm":
+            # A radio module called LoRa.cpp must not turn into LLM LoRA.
+            if _RADIO.search(title + " " + name + " " + "\n".join(code)):
+                continue
+            # Evidence must be technology-specific in ADDED source code,
+            # not simply in the current repository's name or commit title.
+            lines = [line for line in code if _LORA_PATCH_SYMBOL.search(line)]
+            if lines and (name.lower().endswith((".py", ".ts", ".tsx", ".js", ".rs", ".go"))
+                          or re.search(r"(?i)\b(?:lora|llm|adapter|finetun|transformer)\b", "\n".join(lines))):
+                return EventLocalGateDecision(
+                    "eligible", "same_sha_executable_lora_code",
+                    (title + "\n" + "\n".join(lines[:3]))[:1000],
+                )
+        elif family == "rag":
+            lines = [line for line in code if _RAG_PATCH_SYMBOL.search(line)]
+            if lines:
+                return EventLocalGateDecision(
+                    "eligible", "same_sha_executable_rag_code",
+                    (title + "\n" + "\n".join(lines[:3]))[:1000],
+                )
+            # An RAG-labelled commit can implement the retrieval/query half
+            # without spelling RAG inside every changed line. Keep it strict:
+            # retrieval and generation/query context must co-occur in code.
+            combined = "\n".join(code)
+            if (_RAG_NAME.search(title)
+                    and _RAG_RETRIEVE.search(combined)
+                    and _RAG_APPLY.search(combined)):
+                relevant = [line for line in code if _RAG_RETRIEVE.search(line) or _RAG_APPLY.search(line)]
+                return EventLocalGateDecision(
+                    "eligible", "same_sha_executable_rag_retrieval_query",
+                    (title + "\n" + "\n".join(relevant[:4]))[:1000],
+                )
+    return None
