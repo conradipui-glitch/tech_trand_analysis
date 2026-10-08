@@ -138,8 +138,7 @@ def _evaluate_source_diff(
             # Evidence must be technology-specific in ADDED source code,
             # not simply in the current repository's name or commit title.
             lines = [line for line in code if _LORA_PATCH_SYMBOL.search(line)]
-            if lines and (name.lower().endswith((".py", ".ts", ".tsx", ".js", ".rs", ".go"))
-                          or re.search(r"(?i)\b(?:lora|llm|adapter|finetun|transformer)\b", "\n".join(lines))):
+            if lines and name.lower().endswith((".py", ".ts", ".tsx", ".js", ".rs", ".go")):
                 return EventLocalGateDecision(
                     "eligible", "same_sha_executable_lora_code",
                     (title + "\n" + "\n".join(lines[:3]))[:1000],
