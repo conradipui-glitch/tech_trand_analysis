@@ -86,6 +86,10 @@ def main() -> None:
         json.dumps(result.trend_states, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    (out / "history_checks.json").write_text(
+        json.dumps(result.history_checks, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     summary = result.summary()
     (out / "summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
