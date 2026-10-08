@@ -48,6 +48,7 @@ class VerifiedGitEvent:
     url: str
     matched_terms: tuple[str, ...]
     source_endpoint: str
+    evidence_text: str | None = None
 
     def to_observation(
         self,
@@ -67,7 +68,7 @@ class VerifiedGitEvent:
             "external_id": f"{self.repository}:{event_key}",
             "canonical_url": self.url,
             "title": self.title,
-            "text": self.title,
+            "text": self.evidence_text or self.title,
             "published_at": self.occurred_at,
             "updated_at": None,
             "observed_at": _iso_z(observed),
@@ -216,6 +217,7 @@ class GitHubHistoryClient:
                     url=html_url,
                     matched_terms=matched,
                     source_endpoint="GET /search/commits",
+                    evidence_text=message[:4000],
                 )
                 events[sha] = event
         return list(events.values())
@@ -250,6 +252,7 @@ class GitHubHistoryClient:
                     url=url,
                     matched_terms=matched,
                     source_endpoint=f"GET /repos/{query.repository}/releases",
+                    evidence_text=text[:4000],
                 )
             )
         return events
@@ -286,6 +289,7 @@ class GitHubHistoryClient:
                     url=f"https://github.com/{query.repository}/releases/tag/{quote(tag_name, safe='')}",
                     matched_terms=matched,
                     source_endpoint=f"GET /repos/{query.repository}/tags",
+                    evidence_text=tag_name,
                 )
             )
         return events
