@@ -72,7 +72,13 @@ def trace_renamed_module(
 
     for _ in range(max_hops):
         transition: RenameStep | None = None
-        for path in sorted(current):
+        # Candidate basenames influence *search order only*. They never
+        # certify identity; every accepted path needs GitHub "renamed" proof.
+        candidate_basenames = {p.rsplit("/", 1)[-1] for p in candidate_paths}
+        ordered_paths = sorted(
+            current, key=lambda p: (p.rsplit("/", 1)[-1] not in candidate_basenames, p)
+        )
+        for path in ordered_paths:
             query = urlencode({
                 "path": path,
                 "since": cursor_date.isoformat().replace("+00:00", "Z"),
