@@ -44,6 +44,7 @@ class GitHubBridgeResult:
     similarities: dict[str, float]
     accepted_observations: tuple[dict[str, Any], ...]
     update: TrendStateUpdateResult | None
+    verified_observations: tuple[dict[str, Any], ...] = ()
 
 
 class GitHubHistoryBridge:
@@ -232,6 +233,7 @@ class GitHubHistoryBridge:
             similarities=gated.similarities,
             accepted_observations=tuple(accepted_observations),
             update=update,
+            verified_observations=tuple(observation for _, observation in events),
         )
 
 
