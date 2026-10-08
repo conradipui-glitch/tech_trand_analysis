@@ -89,4 +89,27 @@ def evaluate_event_local(
         if family == "lora_llm" and not _LORA_NAME.search(span):
             continue
         return EventLocalGateDecision("eligible", "local_technology_and_implementation_context", span[:1000])
+    # Strict fallback for a SHORT commit subject that was not independently
+    # descriptive: only same-SHA added source lines from GitHub commit diff
+    # may establish the missing technical context. No mutable repo metadata.
+    marker = "\\nGIT_PATCH_ADDED_LINES\\n"
+    if family == "lora_llm" and marker in text:
+        subject, patch = text.split(marker, 1)
+        subject = subject.splitlines()[0].strip()
+        if (
+            re.search(r"(?i)\\b(?:add|implement|enable|introduce|support)\\b.*\\blora\\b", subject)
+            and not _RADIO.search(subject)
+            and not re.search(r"\\bLoRa\\b", subject)
+            and re.search(r"(?m)^FILE [^\\n]+\\.(?:py|ts|tsx|js|rs|cpp|go)$", patch)
+            and re.search(r"(?i)\\b(?:LoRAConfig|LoRAModel|loralib|mark_only_lora_as_trainable)\\b", patch)
+        ):
+            # This is a composite of two independently dated pieces of the
+            # SAME commit: its authentic subject and its changed code lines.
+            relevant = [line for line in patch.splitlines() if re.search(
+                r"(?i)LoRAConfig|LoRAModel|loralib|mark_only_lora_as_trainable", line
+            )]
+            return EventLocalGateDecision(
+                "eligible", "same_commit_source_diff_confirms_lora_implementation",
+                (subject + "\\n" + "\\n".join(relevant[:3]))[:1000],
+            )
     return EventLocalGateDecision("rejected", "no_event_local_implementation_evidence", None)
