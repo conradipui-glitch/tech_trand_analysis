@@ -8,6 +8,7 @@ from .github_history import (
     VerifiedGitEvent,
 )
 from .openalex import OpenAlexAdapter, OpenAlexProtocolError, OpenAlexQuery
+from .epo_ops import EPOOPSAdapter, EPOOPSCredentialsMissing, EPOOPSProtocolError, EPOOPSQuery
 
 __all__ = [
     "GitHubAdapter",
@@ -21,4 +22,8 @@ __all__ = [
     "OpenAlexAdapter",
     "OpenAlexProtocolError",
     "OpenAlexQuery",
+    "EPOOPSAdapter",
+    "EPOOPSCredentialsMissing",
+    "EPOOPSProtocolError",
+    "EPOOPSQuery",
 ]
