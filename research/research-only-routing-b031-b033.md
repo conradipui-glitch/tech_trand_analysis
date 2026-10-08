@@ -42,3 +42,17 @@ The `SourceRouter` now exposes `enabled_providers` (intended domain policy), `co
 4. Address source sample selection bias before treating provider aggregate search counts as scientific observation volume.
 
 Validation code: `scripts/validate_routing_research_only.py`, `tests/test_source_router.py`, `tests/test_scoring.py`, `tests/test_result_assembler.py`, `tests/test_history_filter.py`. Retrospective v0.5 Actions workflow stores its JSON as `retrospective-validation-v0.5`.
+
+
+## Retrospective v0.5 completed (post-fix confirmation)
+
+The full active retrospective was rerun in [GitHub Actions 37849106788](https://github.com/conradipui-glitch/tech_trand_analysis/actions/runs/37849106788), succeeded, and uploaded a real JSON artifact `retrospective-validation-v0.5` (21? no, workflow retention 30 days).
+
+| Case | First matching gated research month | Sustained research month | Useful score signal | Lead to preregistered milestone | Pre-origin gated sampled papers |
+| --- | --- | --- | --- | --- | --- |
+| RAG | 2020-05 | 2021-01 | 2022-01 | 14 months | 0 |
+| LoRA | 2021-06 | not found | not found | not established | 0 |
+
+This is the **recomputed score from inspected accepted samples**, not extrapolated provider totals. The useful-score definition and preregistered milestone dates were unchanged. RAG's target (at least three months lead) still holds **within this research-sample proxy**. LoRA's research-only target is unproven; historically verified implementation evidence is studied separately and cannot be inferred from publication counts. Neither case proves first-ever technological existence, and this limited score validation must not be applied as a blanket promise about arbitrary directions.
+
+The first attempt to publish the v0.5 artifact (run `37848890715`) failed solely due to an outdated `upload-artifact` path; the actual calculation completed. The path was fixed, and run `37849106788` was fully green with `retrospective-validation-v0.5` available.
