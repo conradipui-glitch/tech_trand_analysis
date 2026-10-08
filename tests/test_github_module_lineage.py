@@ -152,6 +152,35 @@ class ModuleLineageTests(unittest.TestCase):
                 self.assertFalse(result.supporting)
         self.assertEqual([], calls)
 
+    def test_shared_utils_file_must_change_technology_related_code(self):
+        from dataclasses import replace
+        anchor = replace(
+            ANCHOR, source_diff="FILE trl/trainer/utils.py\n+target_modules=model_config.lora_target_modules"
+        )
+        # The base candidate is a regular change in utils.py, not evidence
+        # of an additional LoRA change.
+        generic_file = [{
+            "filename": "trl/trainer/utils.py",
+            "patch": "@@ def create_model_from_path @@\n+dtype = kwargs.get('dtype', 'auto')",
+        }]
+        client, _ = mock_history(files=generic_file)
+        with client:
+            outcome = GitModuleLineageVerifier(client).verify(
+                technology_direction=DIRECTION, anchor=anchor, candidate=CANDIDATE,
+            )
+        self.assertFalse(outcome.supporting)
+
+        lora_file = [{
+            "filename": "trl/trainer/utils.py",
+            "patch": "@@ def get_peft_config @@\n+target_parameters=model_args.lora_target_parameters",
+        }]
+        client, _ = mock_history(files=lora_file)
+        with client:
+            outcome = GitModuleLineageVerifier(client).verify(
+                technology_direction=DIRECTION, anchor=anchor, candidate=CANDIDATE,
+            )
+        self.assertTrue(outcome.supporting)
+
     def test_missing_candidate_sha_is_not_proof(self):
         client, _ = mock_history(sha="spoof")
         with client:
