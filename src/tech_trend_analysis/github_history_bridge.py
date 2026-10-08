@@ -126,6 +126,7 @@ class GitHubHistoryBridge:
         candidates = candidates[: self.policy.max_repositories_per_trend]
 
         events: list[tuple[str, dict[str, Any]]] = []
+        source_diff_by_id: dict[str, str] = {}
         no_event: list[str] = []
         observed_at = checked_at.replace(microsecond=0)
         for anchor_id, repository in candidates:
@@ -153,6 +154,8 @@ class GitHubHistoryBridge:
                 if event_dt.tzinfo is None or event_dt.astimezone(timezone.utc) > checked_at:
                     raise ValueError("historical event timestamp must be timezone-aware and not in the future")
                 observation = event.to_observation(query, observed_at=observed_at)
+                if event.source_diff:
+                    source_diff_by_id[observation["observation_id"]] = event.source_diff
                 # Preserve stable actor identity instead of double-counting repo owner.
                 anchor_actors = observations_by_id[anchor_id].get("actors")
                 if isinstance(anchor_actors, list) and anchor_actors:
@@ -179,6 +182,7 @@ class GitHubHistoryBridge:
                 technology_direction=state.technology_direction,
                 title=obs["title"],
                 text=obs.get("text") or "",
+                source_diff=source_diff_by_id.get(obs["observation_id"]),
             )
             for _, obs in events
         ] if experimental else []
@@ -264,6 +268,9 @@ class GitHubHistoryBridge:
                 continue
             if experimental:
                 observation["quality_flags"]["experimental_event_local_gate"] = True
+                observation["metrics"]["same_sha_source_diff_used"] = (
+                    event_id in source_diff_by_id
+                )
                 observation["metrics"]["event_local_similarity_to_direction"] = gated.similarities[event_id]
             anchor = observations_by_id[anchor_id]
             # Identity routing uses the existing owned repository member.
