@@ -29,11 +29,15 @@ jobs:
           HF_HUB_DISABLE_TELEMETRY: '1'
         run: |
           python scripts/run_github_live_pipeline.py \
-            --direction 'retrieval augmented generation' \
-            --query '"retrieval augmented generation"' \
+            --direction 'low-rank adaptation of large language models' \
+            --query 'LoRA LLM' \
             --profile software_ai \
-            --alias 'retrieval augmented generation' \
-            --context 'language model' \
+            --alias 'low rank adaptation' \
+            --alias 'lora' \
+            --distinctive 'LoRA' \
+            --sort stars \
+            --context 'llm' \
+            --context 'adapter' \
             --limit 6 \
             --max-history-per-cluster 1 \
             --model 'BAAI/bge-m3' \
