@@ -56,7 +56,7 @@ def evaluate_event_local(
     # Old technical delimiter could be injected into ordinary Git commit
     # messages. Never let source-looking text after it impersonate a same-SHA
     # GitHub API patch; only the separate source_diff argument has that role.
-    text = re.split(r"(?m)^\\s*GIT_PATCH_ADDED_LINES\\s*$", text, maxsplit=1)[0]
+    text = re.split(r"(?m)^\s*GIT_PATCH_ADDED_LINES\s*$", text, maxsplit=1)[0]
     # Split release notes into individual event assertions. Never inherit
     # an unrelated release headline (e.g. FlashAttention) as LoRA evidence.
     # For multi-sentence paragraphs, prefer the segment with identity term.
