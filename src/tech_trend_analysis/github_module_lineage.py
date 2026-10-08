@@ -141,6 +141,11 @@ class GitModuleLineageVerifier:
                 anchor_sha=anchor.external_id, candidate_sha=candidate.external_id,
                 anchor_time=anchor.occurred_at, candidate_time=candidate.occurred_at,
                 paths=paths,
+                candidate_paths=tuple(
+                    file["filename"] for file in files[:60]
+                    if isinstance(file, dict) and isinstance(file.get("filename"), str)
+                    and _source_file(file["filename"])
+                ),
             )
             if resolution.complete and resolution.steps:
                 allowed_paths = set(resolution.paths)
