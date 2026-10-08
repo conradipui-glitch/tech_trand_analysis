@@ -19,7 +19,7 @@ from tech_trend_analysis.trend_state import PeriodBucket, TrendState
 
 
 OPENALEX_URL = "https://api.openalex.org/works"
-VALIDATION_VERSION = "0.4.0"
+VALIDATION_VERSION = "0.5.0"
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,6 +148,7 @@ def main() -> None:
             "discovery_query": "broad query retained in case definition for audit/discovery",
             "historical_query": "targeted quoted/Boolean query derived from the discovered semantic cluster",
             "membership_gate": "representative results must still pass alias/context or very strong semantic-anchor gate",
+            "scoring_unit": "only actually inspected accepted publication samples (lower bound), not relevance-ranked search volume extrapolation",
             "github_history": "excluded until first relevant commit/release/tag can be timestamp-verified",
             "pre_origin_boundary": "a monthly bucket counts as pre-origin only when the entire bucket ends before the known origin date",
         },
@@ -190,7 +191,7 @@ def run_case(
         )
         openalex["semantic_gate"] = gate.to_dict()
         openalex["accepted_sample_actors"] = _accepted_sample_actors(openalex["samples"], gate)
-        research = gate.estimated_count
+        research = gate.grounded_sample_count
         curve.append(
             {
                 "period": window.key,
