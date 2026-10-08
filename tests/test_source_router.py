@@ -42,6 +42,41 @@ class SourceRouterTests(unittest.TestCase):
         self.assertFalse(all_routes["github"].enabled)
         self.assertFalse(all_routes["huggingface"].enabled)
 
+    def test_b033_source_executability_is_not_policy_enablement(self):
+        for direction, expected_profile, expected_ready, expected_blocked in (
+            ("AI agents", "software_ai", {"github", "openalex"}, {"huggingface", "epo_ops"}),
+            ("neuromorphic computing", "hardware_semiconductor", {"openalex", "github"}, {"epo_ops", "huggingface"}),
+            ("solid-state batteries", "materials_energy", {"openalex"}, {"epo_ops"}),
+        ):
+            with self.subTest(direction=direction):
+                route = self.router.route(direction)
+                self.assertEqual(expected_profile, route.profile)
+                self.assertEqual(expected_ready, {p.provider for p in route.collectable_providers})
+                self.assertEqual(expected_blocked, {p.provider for p in route.blocked_providers})
+                self.assertTrue({p.provider for p in route.collectable_providers}.issubset(
+                    {p.provider for p in route.enabled_providers}
+                ))
+                self.assertEqual("adapter_and_credentials_missing",
+                                 next(p.execution_status for p in route.providers if p.provider == "epo_ops"))
+                self.assertEqual("adapter_missing",
+                                 next(p.execution_status for p in route.providers if p.provider == "huggingface"))
+
+    def test_provider_routing_does_not_claim_patent_or_hf_adapter_is_installed(self):
+        software = self.router.route("AI agents")
+        self.assertEqual(("github", "openalex"),
+                         tuple(provider.provider for provider in software.collectable_providers))
+        batteries = self.router.route("solid-state batteries")
+        self.assertNotIn("github", {p.provider for p in batteries.enabled_providers})
+        self.assertNotIn("huggingface", {p.provider for p in batteries.collectable_providers})
+
+    def test_russian_direction_examples_and_manual_override(self):
+        self.assertEqual("hardware_semiconductor",
+                         self.router.route("нейроморфные процессоры").profile)
+        self.assertEqual("materials_energy",
+                         self.router.route("твердотельные аккумуляторы").profile)
+        override = self.router.route("AI agents", profile_override="materials_energy")
+        self.assertEqual({"openalex"}, {p.provider for p in override.collectable_providers})
+
     def test_unknown_direction_falls_back_to_mixed(self):
         route = self.router.route("frontier systems for future infrastructure")
         self.assertEqual("mixed", route.profile)
