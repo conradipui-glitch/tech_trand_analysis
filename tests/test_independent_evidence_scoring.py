@@ -134,6 +134,35 @@ class IndependentGitHubScoringTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "belongs_to_repository"):
             independent_unit(commit, event_time="2026-02-01T00:00:00Z", actor_keys=set())
 
+    def test_legacy_github_state_without_unit_provenance_rejected(self):
+        from tech_trend_analysis.trend_state import TrendState
+        old = TrendState(
+            trend_id="old", profile="software_ai",
+            technology_direction=DIRECTION, embedding_model="BAAI/bge-m3",
+            centroid=(1.0, 0.0),
+            first_seen="2025-01-01T00:00:00Z",
+            last_seen="2026-08-01T00:00:00Z",
+            created_at="2026-09-01T00:00:00Z",
+            updated_at="2026-09-01T00:00:00Z",
+            observation_ids={"github:alice/lora", "github:alice/lora:commit:a1"},
+        )
+        with self.assertRaisesRegex(ValueError, "re-ingest"):
+            EmergingScorer().score(old, as_of=AS_OF)
+
+    def test_orphan_git_event_rejected_without_mutating_existing_state(self):
+        manager, trend_id, repo = self.initial_state()
+        state = manager.states[trend_id]
+        before = state.to_dict()
+        dangling = obs(
+            "github:alice/lora:commit:orphan", repo="alice/lora",
+            kind="commit", verified=True, published="2026-03-01T00:00:00Z",
+        )
+        dangling.pop("relationships")
+        with self.assertRaisesRegex(ValueError, "belongs_to_repository"):
+            ingest(manager, "orphan", {repo["observation_id"]: repo,
+                                       dangling["observation_id"]: dangling})
+        self.assertEqual(before, state.to_dict())
+
     def test_separate_providers_keep_distinct_research_evidence(self):
         manager, trend_id, _ = self.initial_state()
         paper2=obs("openalex:W43", kind="paper", provider="openalex",
