@@ -55,6 +55,8 @@ class HistoryFilterTests(unittest.TestCase):
         )
         self.assertEqual((2, 3, 4), result.accepted_indices)
         self.assertEqual(180, result.estimated_count)
+        self.assertEqual(3, result.grounded_sample_count)
+        self.assertEqual(3, result.to_dict()["grounded_sample_count"])
 
     def test_generic_language_model_adaptation_without_lora_is_rejected(self):
         result = gate_sampled_count(
@@ -82,6 +84,24 @@ class HistoryFilterTests(unittest.TestCase):
             context_terms=("llm", "language model", "fine tuning", "transformer", "adapter"),
         )
         self.assertEqual(0, result.estimated_count)
+
+    def test_relevance_ranked_results_cannot_become_thousands_of_score_observations(self):
+        result = gate_sampled_count(
+            raw_count=25236,
+            sample_texts=[
+                "Agentic AI orchestration with large language models",
+                "Agentic AI agents for developer tools",
+                "Agentic AI frameworks for automation",
+                "Agentic AI systems in research",
+            ],
+            anchor_text="Autonomous AI agents powered by large language models",
+            aliases=("agentic ai", "ai agents"),
+            context_terms=("ai", "llm", "agent"),
+        )
+        self.assertEqual(4, result.matched_sample_count)
+        self.assertEqual(4, result.grounded_sample_count)
+        self.assertGreater(result.estimated_count, 1000)
+        self.assertLessEqual(result.grounded_sample_count, len(result.similarities))
 
     def test_single_sample_match_is_not_amplified(self):
         result = gate_sampled_count(
