@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--max-history-per-cluster", type=int, default=3)
     p.add_argument("--model", default="BAAI/bge-m3")
     p.add_argument("--similarity-threshold", type=float, default=0.82)
+    p.add_argument("--experimental-event-local-threshold", type=float, default=None, help="Research pilot only; does not replace production centroid gate")
     p.add_argument("--output-dir", default="validation/results/github-live")
     p.add_argument("--sources", default="config/sources.yaml")
     return p.parse_args()
@@ -66,6 +67,7 @@ def main() -> None:
             repository_sort=args.sort,
             max_history_repositories_per_cluster=args.max_history_per_cluster,
             history_similarity_threshold=args.similarity_threshold,
+            experimental_event_local_threshold=args.experimental_event_local_threshold,
             profile_override=args.profile,
         )
 
