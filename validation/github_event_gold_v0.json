@@ -1,0 +1,280 @@
+{
+  "version": "0.1.0",
+  "purpose": "Pilot local event relevance disambiguation. Small mixed live/benchmark/synthetic gold set; NOT a statistically powered validation set.",
+  "annotation_policy": [
+    "Label means event itself adds/supports/fixes specified technology in requested domain; mentioning it in docs is not enough.",
+    "For LoRA-LLM, require LLM/transformer/PEFT/fine-tuning context; LoRa radio and image-only diffusion negatives.",
+    "For RAG, require retrieval augmented language-model or document-answering context; red-amber-green negatives.",
+    "The live items reproduce 2026-10-08 pilot text; benchmark/synthetic entries are not fresh independently fetched evidence."
+  ],
+  "directions": {
+    "lora_llm": "low-rank adaptation of large language models",
+    "rag": "retrieval augmented generation"
+  },
+  "cases": [
+    {
+      "id": "peft-lora-config",
+      "direction": "lora_llm",
+      "split": "calibration",
+      "expected": true,
+      "origin": "live",
+      "repository": "huggingface/peft",
+      "title": "add `modules_to_save` to LoraConfig and other fixes",
+      "text": "add `modules_to_save` to LoraConfig and other fixes\n1. Add `modules_to_save` to LoraConfig\n2. Using PeftModel for LoraConfig instead of task-specific classes because LoRA is task agnostic.",
+      "source_url": "https://github.com/huggingface/peft/commit/d04f6661eec9dc2811cabe6c4405e64a9d49a07f"
+    },
+    {
+      "id": "airllm-streaming",
+      "direction": "lora_llm",
+      "split": "holdout",
+      "expected": true,
+      "origin": "live",
+      "repository": "lyogavin/airllm",
+      "title": "feat: streamed LoRA training for Qwen3.8 on 6GB",
+      "text": "feat: streamed LoRA training for Qwen3.8 on 6GB\nKeep frozen weights on disk and adapters on GPU so Flash-Next trains under 6GB on a 3060 Ti.",
+      "source_url": "https://github.com/lyogavin/airllm/commit/d7716a37ae7dc5e90c31c1878d6fab785956a081"
+    },
+    {
+      "id": "llamafactory-release-lora",
+      "direction": "lora_llm",
+      "split": "holdout",
+      "expected": true,
+      "origin": "live",
+      "repository": "hiyouga/LlamaFactory",
+      "title": "v0.1.8: FlashAttention-2 and Baichuan2",
+      "text": "v0.1.8: FlashAttention-2 and Baichuan2\n- Support FlashAttention-2 for LLaMA models\n- Support --lora_target all argument which automatically finds modules for LoRA training\n- Fix tokenizer issue",
+      "source_url": "https://github.com/hiyouga/LlamaFactory/releases/tag/v0.1.8"
+    },
+    {
+      "id": "ms-swift-diffusers",
+      "direction": "lora_llm",
+      "split": "holdout",
+      "expected": false,
+      "origin": "live",
+      "repository": "modelscope/ms-swift",
+      "title": "Fix bug: LoRA not work with diffusers>0.20.0 (#73)",
+      "text": "Fix bug: LoRA not work with diffusers>0.20.0 (#73)",
+      "source_url": "https://github.com/modelscope/ms-swift/commit/ab286fa57cd684681f517d37a3f255dfdbd1b584"
+    },
+    {
+      "id": "microsoft-roberta",
+      "direction": "lora_llm",
+      "split": "calibration",
+      "expected": true,
+      "origin": "benchmark",
+      "repository": "microsoft/LoRA",
+      "title": "RoBERTa base LoRA checkpoints",
+      "text": "RoBERTa base LoRA checkpoints for language model adaptation.",
+      "source_url": "https://github.com/microsoft/LoRA/releases"
+    },
+    {
+      "id": "peft-first-support",
+      "direction": "lora_llm",
+      "split": "holdout",
+      "expected": true,
+      "origin": "benchmark",
+      "repository": "huggingface/peft",
+      "title": "add lora support",
+      "text": "add lora support for PEFT model adapters",
+      "source_url": "https://github.com/huggingface/peft/commit/e8160370247b3b61f57e59eb3f49acf9e3618b4b"
+    },
+    {
+      "id": "lora-radio-sensor",
+      "direction": "lora_llm",
+      "split": "calibration",
+      "expected": false,
+      "origin": "synthetic",
+      "repository": "example/radio",
+      "title": "LoRa wireless sensor network support",
+      "text": "Add LoRa wireless long-range sensor radio stack gateway support",
+      "source_url": null
+    },
+    {
+      "id": "lora-radio-join",
+      "direction": "lora_llm",
+      "split": "holdout",
+      "expected": false,
+      "origin": "synthetic",
+      "repository": "example/gateway",
+      "title": "New LoRaWAN Lora gateway",
+      "text": "Implement Lora SX1276 wireless radio gateway and RF frequencies",
+      "source_url": null
+    },
+    {
+      "id": "lora-alias-unrelated",
+      "direction": "lora_llm",
+      "split": "calibration",
+      "expected": false,
+      "origin": "synthetic",
+      "repository": "example/themes",
+      "title": "Update Lora page color",
+      "text": "Fix Lora themed landing page and image carousel",
+      "source_url": null
+    },
+    {
+      "id": "lora-llm-clean",
+      "direction": "lora_llm",
+      "split": "calibration",
+      "expected": true,
+      "origin": "synthetic",
+      "repository": "example/adapter",
+      "title": "Implement LoRA adapters for transformer LLM",
+      "text": "Add LoRA rank decomposition and parameter efficient fine-tuning to language models",
+      "source_url": null
+    },
+    {
+      "id": "lora-bare-label",
+      "direction": "lora_llm",
+      "split": "holdout",
+      "expected": false,
+      "origin": "synthetic",
+      "repository": "example/changelog",
+      "title": "LoRA updates",
+      "text": "Changelog: LoRA updates. Miscellaneous refactors, typo fixes, and cleanup.",
+      "source_url": null
+    },
+    {
+      "id": "lora-model-card",
+      "direction": "lora_llm",
+      "split": "holdout",
+      "expected": true,
+      "origin": "synthetic",
+      "repository": "example/qwen",
+      "title": "LoRA adapter for Qwen fine-tuning",
+      "text": "Train Qwen language model with LoRA adapters and merge weights.",
+      "source_url": null
+    },
+    {
+      "id": "lora-negated",
+      "direction": "lora_llm",
+      "split": "holdout",
+      "expected": false,
+      "origin": "synthetic",
+      "repository": "example/config",
+      "title": "Remove LoRA references",
+      "text": "Remove old LoRA mention from docs; this release does not implement adapters.",
+      "source_url": null
+    },
+    {
+      "id": "rag-transformers",
+      "direction": "rag",
+      "split": "calibration",
+      "expected": true,
+      "origin": "benchmark",
+      "repository": "huggingface/transformers",
+      "title": "RAG (#6813)",
+      "text": "Implement RAG retrieval augmented generation and RagRetriever model.",
+      "source_url": "https://github.com/huggingface/transformers/commit/c754c41c6193565fecaf411b1de385bf90ab5c70"
+    },
+    {
+      "id": "rag-openai-plugin",
+      "direction": "rag",
+      "split": "holdout",
+      "expected": true,
+      "origin": "benchmark",
+      "repository": "openai/chatgpt-retrieval-plugin",
+      "title": "ChatGPT Retrieval Plugin",
+      "text": "Add ChatGPT Retrieval Plugin for vector document indexing and retrieval augmented answering.",
+      "source_url": "https://github.com/openai/chatgpt-retrieval-plugin/commit/32bf09d16c4341571b530dd319d6678cb00f2d44"
+    },
+    {
+      "id": "rag-radio-spectrum",
+      "direction": "rag",
+      "split": "holdout",
+      "expected": false,
+      "origin": "synthetic",
+      "repository": "example/ops",
+      "title": "RAG status dashboard",
+      "text": "Display RAG red amber green status for radio network deployments.",
+      "source_url": null
+    },
+    {
+      "id": "rag-color-pr",
+      "direction": "rag",
+      "split": "calibration",
+      "expected": false,
+      "origin": "synthetic",
+      "repository": "example/visual",
+      "title": "RAG traffic lights",
+      "text": "Change red amber green colors for finance scorecards and charts.",
+      "source_url": null
+    },
+    {
+      "id": "rag-chat-retrieval",
+      "direction": "rag",
+      "split": "calibration",
+      "expected": true,
+      "origin": "synthetic",
+      "repository": "example/retriever",
+      "title": "RAGRetriever support",
+      "text": "Implement RAG retriever over document embeddings for LLM question answering.",
+      "source_url": null
+    },
+    {
+      "id": "rag-vague",
+      "direction": "rag",
+      "split": "holdout",
+      "expected": false,
+      "origin": "synthetic",
+      "repository": "example/settings",
+      "title": "RAG cleanup",
+      "text": "RAG renamed for internal workflow, formatting only.",
+      "source_url": null
+    },
+    {
+      "id": "rag-hybrid-search",
+      "direction": "rag",
+      "split": "holdout",
+      "expected": true,
+      "origin": "synthetic",
+      "repository": "example/search",
+      "title": "Retrieval-augmented generation pipeline",
+      "text": "Add retrieval-augmented generation pipeline with vector index and grounded LLM answers.",
+      "source_url": null
+    },
+    {
+      "id": "rag-policy",
+      "direction": "rag",
+      "split": "calibration",
+      "expected": false,
+      "origin": "synthetic",
+      "repository": "example/admin",
+      "title": "RAG access policy",
+      "text": "Set red amber green RAG indicator for quarterly management report.",
+      "source_url": null
+    },
+    {
+      "id": "rag-retrieval-bug",
+      "direction": "rag",
+      "split": "holdout",
+      "expected": true,
+      "origin": "synthetic",
+      "repository": "example/llm",
+      "title": "Fix RAG chunk retrieval",
+      "text": "Fix retrieval augmented generation chunking in LLM question answering.",
+      "source_url": null
+    },
+    {
+      "id": "rag-mention-only",
+      "direction": "rag",
+      "split": "holdout",
+      "expected": false,
+      "origin": "synthetic",
+      "repository": "example/docs",
+      "title": "List popular RAG tools",
+      "text": "Add references to external RAG libraries in README; no implementation included.",
+      "source_url": null
+    },
+    {
+      "id": "lora-non-llm-imaging",
+      "direction": "lora_llm",
+      "split": "calibration",
+      "expected": false,
+      "origin": "synthetic",
+      "repository": "example/diffusion",
+      "title": "LoRA texture training",
+      "text": "Support LoRA fine tuning for stable diffusion image generation only.",
+      "source_url": null
+    }
+  ]
+}
