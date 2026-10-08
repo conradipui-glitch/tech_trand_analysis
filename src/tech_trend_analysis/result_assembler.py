@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from typing import Any, Mapping, Sequence
 
-from .scoring import EmergingScoreResult, EmergingScorer, SCORE_VERSION
+from .scoring import EmergingScoreResult, EmergingScorer, SCORE_VERSION, is_research_only
 from .trend_state import TrendState
 
 
@@ -107,6 +107,12 @@ def assemble_trend_analysis(
         )
     )
     selected = ranked[:TOP_LIMIT]
+    research_only_count = sum(is_research_only(item.state) for item in selected)
+    if research_only_count:
+        warnings.append(
+            f"{research_only_count} candidate(s) have research-only evidence. "
+            "They are investigation signals, not verified implementations or adoption."
+        )
 
     if not selected:
         status = "insufficient_evidence"
@@ -179,6 +185,16 @@ def _trend_contract(*, rank: int, candidate: RankedCandidate) -> dict[str, Any]:
     name = _candidate_name(primary, state)
     description = _candidate_description(primary, name)
 
+    limitations = [
+        "Ranking is deterministic from TrendState + Emerging Score; no LLM selected or reordered this candidate.",
+        "Problem/advantage narrative remains fail-closed until grounded enrichment is attached.",
+        f"Score methodology={score.version}; result assembler={METHODOLOGY_VERSION}.",
+    ]
+    if is_research_only(state):
+        limitations.append(
+            "Research-only: no verified patent, implementation, product or adoption. "
+            "Keep on watchlist; publication volume is not evidence of implementation."
+        )
     return {
         "rank": rank,
         "trend_id": state.trend_id,
@@ -218,11 +234,7 @@ def _trend_contract(*, rank: int, candidate: RankedCandidate) -> dict[str, Any]:
         ],
         "representative_sources": sources,
         "methodology_explanation": _methodology_explanation(score),
-        "limitations": [
-            "Ranking is deterministic from TrendState + Emerging Score; no LLM selected or reordered this candidate.",
-            "Problem/advantage narrative remains fail-closed until grounded enrichment is attached.",
-            f"Score methodology={score.version}; result assembler={METHODOLOGY_VERSION}.",
-        ],
+        "limitations": limitations,
     }
 
 
