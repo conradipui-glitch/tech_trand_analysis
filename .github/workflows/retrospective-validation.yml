@@ -37,6 +37,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: retrospective-validation-v0.5
-          path: validation/results/retrospective-v0.4.json
+          path: validation/results/retrospective-v0.5.json
           if-no-files-found: error
           retention-days: 30
