@@ -1,0 +1,48 @@
+name: github-live-pipeline-pilot
+
+on:
+  push:
+    paths:
+      - '.github/workflows/github-live-pipeline-pilot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install CPU embedding runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[embeddings]'
+      - name: Run bounded real BGE-M3 discovery/history pilot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HF_HUB_DISABLE_TELEMETRY: '1'
+        run: |
+          python scripts/run_github_live_pipeline.py \
+            --direction 'retrieval augmented generation' \
+            --query '"retrieval augmented generation"' \
+            --profile software_ai \
+            --alias 'retrieval augmented generation' \
+            --context 'language model' \
+            --limit 6 \
+            --max-history-per-cluster 1 \
+            --model 'BAAI/bge-m3' \
+            --output-dir validation/results/github-live-pilot
+      - name: Upload pilot observations and state snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-live-pipeline-pilot
+          path: validation/results/github-live-pilot/
+          if-no-files-found: warn
+          retention-days: 14
