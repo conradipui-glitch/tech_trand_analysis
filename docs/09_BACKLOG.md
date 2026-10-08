@@ -30,7 +30,9 @@
 
 ## NEXT
 
-- [ ] B-034 Подключить production GitHub path. **Частично готово:** `GitHubAdapter` реализует present-day repository discovery; repo `created_at` хранится только как metadata, `published_at=null`; schema/unit tests green; live CI smoke по `AI agents` собрал 20 валидных Observations. `GitHubHistoryClient` уже даёт timestamp-verified commit/release/tag. **Остался мост:** clustered repository members → history events → embeddings → `gate_historical_vectors()` → accepted implementation evidence → TrendState ingest.
+- [ ] B-036 Проверить единый live pipeline с реальной BGE-M3 на 5–10 GitHub репозиториях, вручную оценить accepted/rejected event history и влияние на first_seen. GitHub Actions `github-live-pipeline-pilot` добавлен, результат требует проверки.
+- [ ] B-037 Устранить double counting repository snapshot + verified event того же проекта/актора в Emerging Score; score должен учитывать независимое evidence, не число технических записей.
+- [x] B-034 Реализовать GitHub pipeline bridge: present-day repository discovery → BGE-M3 microclustering → timestamp-verified Git event → same-model semantic gate → existing TrendState. Добавлены `github_history_bridge.py`, `github_live_pipeline.py`, local CLI, contract/integration tests; CI green. Исторические query terms не подмешиваются в semantic embedding; actor identity сохраняется; repo `created_at` не датирует тренд. См. `research/github-discovery-history-bridge.md`. Единый live BGE-M3 pilot вынесен в B-036.
 - [ ] B-031 Проверить false positive: research-only cluster на retrospective/live evidence.
 - [ ] B-033 Проверить profile routing на минимум трёх направлениях: AI agents, neuromorphic computing, solid-state batteries.
 - [ ] B-035 Проверить profile-aware `research → patent/IP → implementation` на representative hardware/materials case; patent не является обязательной ступенью для `software_ai`.
