@@ -74,14 +74,13 @@ class MultiEventApiTests(unittest.TestCase):
                 commit_pages_per_term=2, max_diff_checks=4)
         self.assertEqual(["radio", "early", "later"], [e.external_id for e in candidates])
         self.assertIn("GIT_PATCH_ADDED_LINES", candidates[1].evidence_text)
-        self.assertEqual(
-            "same_commit_source_diff_confirms_lora_implementation",
-            evaluate_event_local(
-                technology_direction=QUERY.technology_direction,
-                title=candidates[1].title,
-                text=candidates[1].evidence_text,
-            ).reason,
+        inspected = evaluate_event_local(
+            technology_direction=QUERY.technology_direction,
+            title=candidates[1].title,
+            text=candidates[1].evidence_text,
         )
+        self.assertTrue(inspected.eligible)
+        self.assertIn("LoRAConfig", inspected.evidence_span)
         self.assertFalse(evaluate_event_local(
             technology_direction=QUERY.technology_direction,
             title=candidates[0].title,
