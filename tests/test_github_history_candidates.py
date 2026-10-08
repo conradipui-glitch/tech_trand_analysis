@@ -53,7 +53,7 @@ class MultiEventApiTests(unittest.TestCase):
                 return httpx.Response(200, json={"items": [
                     commit("radio", "2020-03-01T00:00:00Z", "Add LoRa wireless radio gateway"),
                     commit("early", "2022-11-30T09:21:26Z", "add lora support"),
-                    commit("later", "2023-02-01T10:11:35Z", "add modules_to_save to LoraConfig"),
+                    commit("later", "2023-02-01T10:11:35Z", "add LoRA modules_to_save to LoraConfig"),
                 ]})
             if request.url.path.endswith("/releases") or request.url.path.endswith("/tags"):
                 return httpx.Response(200, json=[])
