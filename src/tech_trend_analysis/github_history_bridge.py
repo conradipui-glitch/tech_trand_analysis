@@ -138,28 +138,32 @@ class GitHubHistoryBridge:
                 distinctive_terms=vetted_distinctive,
                 query_id=f"trend-history:{trend_id}",
             )
-            event = self.history_client.verify_earliest(query)
-            if event is None:
+            if self.policy.experimental_event_local_threshold is not None and hasattr(self.history_client, "candidate_events"):
+                repository_events = self.history_client.candidate_events(query)
+            else:
+                earliest = self.history_client.verify_earliest(query)
+                repository_events = (earliest,) if earliest is not None else ()
+            if not repository_events:
                 no_event.append(repository)
                 continue
-            if event.repository != repository or event.event_kind not in {"commit", "release", "tag"}:
-                raise ValueError(f"untrusted historical event for {repository}")
-            event_dt = datetime.fromisoformat(event.occurred_at.replace("Z", "+00:00"))
-            if event_dt.tzinfo is None or event_dt.astimezone(timezone.utc) > checked_at:
-                raise ValueError("historical event timestamp must be timezone-aware and not in the future")
-            observation = event.to_observation(query, observed_at=observed_at)
-            # Preserve the discovered repository's stable actor ID so the
-            # same author does not count twice under login vs numeric ID.
-            anchor_actors = observations_by_id[anchor_id].get("actors")
-            if isinstance(anchor_actors, list) and anchor_actors:
-                observation["actors"] = [dict(actor) for actor in anchor_actors]
-            observation["metrics"]["historical_validation_scope"] = "bounded_repository_event_search"
-            if observation["published_at"] != event.occurred_at or not observation["quality_flags"].get("historical_timestamp_verified"):
-                raise ValueError("historical Observation failed time provenance check")
-            owner = manager.observation_to_trend.get(observation["observation_id"])
-            if owner is not None and owner != trend_id:
-                raise ValueError("verified event is already owned by a different TrendState")
-            events.append((anchor_id, observation))
+            for event in repository_events:
+                if event.repository != repository or event.event_kind not in {"commit", "release", "tag"}:
+                    raise ValueError(f"untrusted historical event for {repository}")
+                event_dt = datetime.fromisoformat(event.occurred_at.replace("Z", "+00:00"))
+                if event_dt.tzinfo is None or event_dt.astimezone(timezone.utc) > checked_at:
+                    raise ValueError("historical event timestamp must be timezone-aware and not in the future")
+                observation = event.to_observation(query, observed_at=observed_at)
+                # Preserve stable actor identity instead of double-counting repo owner.
+                anchor_actors = observations_by_id[anchor_id].get("actors")
+                if isinstance(anchor_actors, list) and anchor_actors:
+                    observation["actors"] = [dict(actor) for actor in anchor_actors]
+                observation["metrics"]["historical_validation_scope"] = "bounded_repository_event_search"
+                if observation["published_at"] != event.occurred_at or not observation["quality_flags"].get("historical_timestamp_verified"):
+                    raise ValueError("historical Observation failed time provenance check")
+                owner = manager.observation_to_trend.get(observation["observation_id"])
+                if owner is not None and owner != trend_id:
+                    raise ValueError("verified event is already owned by a different TrendState")
+                events.append((anchor_id, observation))
 
         if not events:
             return GitHubBridgeResult(
@@ -222,7 +226,35 @@ class GitHubHistoryBridge:
                 similarity_threshold=self.policy.similarity_threshold,
             )
 
-        approved = set(gated.accepted_ids)
+        # A repository contributes at most ONE accepted implementation event:
+        # earliest SEMANTICALLY accepted event in the bounded candidate window,
+        # never the earliest mere lexical match. Later eligible events are
+        # informational only; they must not amplify score/actor counts.
+        accepted_candidates = set(gated.accepted_ids)
+        chosen_by_repo: dict[str, str] = {}
+        for _, observation in sorted(
+            events,
+            key=lambda item: (item[1]["published_at"], item[1]["observation_id"]),
+        ):
+            oid = observation["observation_id"]
+            if oid not in accepted_candidates:
+                continue
+            repo_key = observation["relationships"][0]["target_id"]
+            chosen_by_repo.setdefault(repo_key, oid)
+        approved = set(chosen_by_repo.values())
+        for _, observation in events:
+            oid = observation["observation_id"]
+            if oid in approved:
+                observation["quality_flags"]["history_selection"] = "earliest_accepted_in_bounded_window"
+            elif oid in accepted_candidates:
+                observation["quality_flags"]["history_selection"] = "later_eligible_not_selected"
+            else:
+                observation["quality_flags"]["history_selection"] = "rejected_by_semantic_gate"
+        gated = HistoricalGateResult(
+            accepted_ids=tuple(oid for oid in event_ids if oid in approved),
+            rejected_ids=tuple(oid for oid in event_ids if oid not in approved),
+            similarities=gated.similarities,
+        )
         clusters: list[Microcluster] = []
         observations_for_ingest: dict[str, dict[str, Any]] = {}
         accepted_observations: list[dict[str, Any]] = []
