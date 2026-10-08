@@ -1,0 +1,34 @@
+name: github-module-lineage-unseen
+
+on:
+  push:
+    paths:
+      - '.github/workflows/github-module-lineage-unseen.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install validation dependencies
+        run: python -m pip install -e .
+      - name: Evaluate frozen Langroid and OpenRLHF history
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/evaluate_github_module_lineage_unseen.py
+      - name: Save complete evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-module-lineage-unseen
+          path: validation/results/github_module_lineage_unseen_v4.json
+          if-no-files-found: warn
+          retention-days: 21
