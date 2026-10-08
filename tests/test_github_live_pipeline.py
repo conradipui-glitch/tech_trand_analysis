@@ -40,7 +40,7 @@ def handler(request):
         repository = "huggingface/transformers" if is_good else "acme/rag-radio"
         title = (
             "Add retrieval augmented generation language model retriever"
-            if is_good else "RAG unrelated radio frequency broadcast feature"
+            if is_good else "retrieval augmented generation radio broadcast firmware unrelated"
         )
         return httpx.Response(200, json={"items": [{
             "sha": "commit123",
