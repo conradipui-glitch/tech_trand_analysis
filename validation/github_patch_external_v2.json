@@ -1,0 +1,147 @@
+{
+  "version": "0.1.0",
+  "frozen_at": "2026-10-09",
+  "selection_method": "Purposefully selected real commits from eight repositories not used in previous B-041 holdout, human-labeled by available commit message and changed-file list BEFORE BGE assessment.",
+  "limitations": "Small convenience sample with manual labels by same researcher, not blind or probabilistically representative. Ambiguous labels intentionally excluded. New scoring must not change these labels.",
+  "technology_directions": {
+    "lora_llm": "low-rank adaptation of large language models",
+    "rag": "retrieval augmented generation"
+  },
+  "cases": [
+    {
+      "id": "qlora-tokenizer",
+      "repository": "artidoro/qlora",
+      "sha": "8532e0117d85b1d63eaa3ef96598d77ecd27a5d6",
+      "family": "lora_llm",
+      "expected": true,
+      "label_note": "Source-code correction for QLoRA LLaMA tokenizer",
+      "url": "https://github.com/artidoro/qlora/commit/8532e0117d85b1d63eaa3ef96598d77ecd27a5d6"
+    },
+    {
+      "id": "qlora-update",
+      "repository": "artidoro/qlora",
+      "sha": "f4ee7fd786689066dc4a8bb6d77110db2ba04821",
+      "family": "lora_llm",
+      "expected": true,
+      "label_note": "Source file change to QLoRA training",
+      "url": "https://github.com/artidoro/qlora/commit/f4ee7fd786689066dc4a8bb6d77110db2ba04821"
+    },
+    {
+      "id": "alpaca-weights",
+      "repository": "tloen/alpaca-lora",
+      "sha": "dde89950f33c9b078f67154f6dccd48f5d730052",
+      "family": "lora_llm",
+      "expected": true,
+      "label_note": "LoRA weight merge bugfix in source",
+      "url": "https://github.com/tloen/alpaca-lora/commit/dde89950f33c9b078f67154f6dccd48f5d730052"
+    },
+    {
+      "id": "alpaca-merge",
+      "repository": "tloen/alpaca-lora",
+      "sha": "6681523bbe225d94dd620dde96fa4134d6a43444",
+      "family": "lora_llm",
+      "expected": true,
+      "label_note": "LoRA weight merging implementation in export script",
+      "url": "https://github.com/tloen/alpaca-lora/commit/6681523bbe225d94dd620dde96fa4134d6a43444"
+    },
+    {
+      "id": "axolotl-install",
+      "repository": "axolotl-ai-cloud/axolotl",
+      "sha": "4131183115f50163a36d3887fdf05d1b0e2a6d0b",
+      "family": "lora_llm",
+      "expected": false,
+      "label_note": "Packaging/docs install compatibility only, not new LoRA source implementation",
+      "url": "https://github.com/axolotl-ai-cloud/axolotl/commit/4131183115f50163a36d3887fdf05d1b0e2a6d0b"
+    },
+    {
+      "id": "ragflow-qa",
+      "repository": "infiniflow/ragflow",
+      "sha": "5e0a689c4340b8c7a060aaaf0a913925cd4221cf",
+      "family": "rag",
+      "expected": true,
+      "label_note": "New retrieval methods in RAG system's QA code",
+      "url": "https://github.com/infiniflow/ragflow/commit/5e0a689c4340b8c7a060aaaf0a913925cd4221cf"
+    },
+    {
+      "id": "ragflow-ui",
+      "repository": "infiniflow/ragflow",
+      "sha": "5effbfac80a530403e396849420e1f8482a15312",
+      "family": "rag",
+      "expected": false,
+      "label_note": "UI-only retrieval testing display changes; no new retrieval/generation engine",
+      "url": "https://github.com/infiniflow/ragflow/commit/5effbfac80a530403e396849420e1f8482a15312"
+    },
+    {
+      "id": "haystack-rag-generator",
+      "repository": "deepset-ai/haystack",
+      "sha": "f13443054af10c1e4111c3738697b090dd93d3da",
+      "family": "rag",
+      "expected": true,
+      "label_note": "RAG generator source implemented",
+      "url": "https://github.com/deepset-ai/haystack/commit/f13443054af10c1e4111c3738697b090dd93d3da"
+    },
+    {
+      "id": "haystack-dpr",
+      "repository": "deepset-ai/haystack",
+      "sha": "72b637ae6db6bceca673a7797b149be034dcd748",
+      "family": "rag",
+      "expected": false,
+      "label_note": "Dense retriever improvement without explicit RAG generation in changed source",
+      "url": "https://github.com/deepset-ai/haystack/commit/72b637ae6db6bceca673a7797b149be034dcd748"
+    },
+    {
+      "id": "langgraph-examples",
+      "repository": "langchain-ai/langgraph",
+      "sha": "05e8c7e3698642ed004a8d3743f035275f124af7",
+      "family": "rag",
+      "expected": false,
+      "label_note": "RAG notebooks/examples only",
+      "url": "https://github.com/langchain-ai/langgraph/commit/05e8c7e3698642ed004a8d3743f035275f124af7"
+    },
+    {
+      "id": "langgraph-merge",
+      "repository": "langchain-ai/langgraph",
+      "sha": "03c30f4aa9f7a460dddcdb26dc43b95f260eda37",
+      "family": "rag",
+      "expected": false,
+      "label_note": "Merge bringing only RAG example notebooks",
+      "url": "https://github.com/langchain-ai/langgraph/commit/03c30f4aa9f7a460dddcdb26dc43b95f260eda37"
+    },
+    {
+      "id": "radiolib-settings",
+      "repository": "jgromes/RadioLib",
+      "sha": "dda6db124c6978bc8ffd398488ec3c3f05191eae",
+      "family": "lora_llm",
+      "expected": false,
+      "label_note": "LoRa wireless radio PHY controls, not LLM LoRA",
+      "url": "https://github.com/jgromes/RadioLib/commit/dda6db124c6978bc8ffd398488ec3c3f05191eae"
+    },
+    {
+      "id": "radiolib-modules",
+      "repository": "jgromes/RadioLib",
+      "sha": "8d8ab76f5ab47beb7e6d7fc5f685da1e27ecfc2f",
+      "family": "lora_llm",
+      "expected": false,
+      "label_note": "Semtech LoRa radio modules, not LLM",
+      "url": "https://github.com/jgromes/RadioLib/commit/8d8ab76f5ab47beb7e6d7fc5f685da1e27ecfc2f"
+    },
+    {
+      "id": "loramac-revert",
+      "repository": "Lora-net/LoRaMac-node",
+      "sha": "263d611b4f82da117301027c6feb1bc4443e6efe",
+      "family": "lora_llm",
+      "expected": false,
+      "label_note": "FSK radio register revert, not model adaptation",
+      "url": "https://github.com/Lora-net/LoRaMac-node/commit/263d611b4f82da117301027c6feb1bc4443e6efe"
+    },
+    {
+      "id": "loramac-delay",
+      "repository": "Lora-net/LoRaMac-node",
+      "sha": "79c2d314b99057f32ee648eab1e681afcbe3dbc9",
+      "family": "lora_llm",
+      "expected": false,
+      "label_note": "LoRaWAN MAC duty timing, not model adaptation",
+      "url": "https://github.com/Lora-net/LoRaMac-node/commit/79c2d314b99057f32ee648eab1e681afcbe3dbc9"
+    }
+  ]
+}
