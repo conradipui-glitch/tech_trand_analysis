@@ -143,6 +143,12 @@ class GitHubHistoryBridge:
             if event_dt.tzinfo is None or event_dt.astimezone(timezone.utc) > checked_at:
                 raise ValueError("historical event timestamp must be timezone-aware and not in the future")
             observation = event.to_observation(query, observed_at=observed_at)
+            # Preserve the discovered repository's stable actor ID so the
+            # same author does not count twice under login vs numeric ID.
+            anchor_actors = observations_by_id[anchor_id].get("actors")
+            if isinstance(anchor_actors, list) and anchor_actors:
+                observation["actors"] = [dict(actor) for actor in anchor_actors]
+            observation["metrics"]["historical_validation_scope"] = "bounded_repository_event_search"
             if observation["published_at"] != event.occurred_at or not observation["quality_flags"].get("historical_timestamp_verified"):
                 raise ValueError("historical Observation failed time provenance check")
             owner = manager.observation_to_trend.get(observation["observation_id"])
@@ -232,6 +238,6 @@ class GitHubHistoryBridge:
 def _evidence_text(observation: Mapping[str, Any]) -> str:
     title = str(observation.get("title") or "").strip()
     body = str(observation.get("text") or "").strip()
-    terms = observation.get("collection_context", {}).get("matched_terms", [])
-    context = " ".join(str(term) for term in terms if isinstance(term, str))
-    return " ".join(part for part in (title, body, context) if part).strip()
+    # Do not inject aliases/matched search terms: that would make the
+    # semantic gate circular and boost an otherwise irrelevant commit.
+    return " ".join(part for part in (title, body) if part).strip()
