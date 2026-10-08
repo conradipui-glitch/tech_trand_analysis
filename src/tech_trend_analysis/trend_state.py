@@ -9,6 +9,7 @@ from typing import Any, Mapping
 import numpy as np
 
 from .clustering import Microcluster, MicroclusteringResult
+from .independent_evidence import IndependentEvidenceUnit, UNIT_POLICY_VERSION, independent_unit, select_representative
 
 
 TREND_STATE_VERSION = "0.1.0"
@@ -56,6 +57,7 @@ class TrendState:
     provider_counts: dict[str, int] = field(default_factory=dict)
     artifact_counts: dict[str, int] = field(default_factory=dict)
     actor_keys: set[str] = field(default_factory=set)
+    independent_units: dict[str, IndependentEvidenceUnit] = field(default_factory=dict)
     first_evidence_at: dict[str, str] = field(default_factory=dict)
     periods: dict[str, PeriodBucket] = field(default_factory=dict)
     update_count: int = 0
@@ -97,6 +99,9 @@ class TrendState:
             "artifact_counts": dict(sorted(self.artifact_counts.items())),
             "actor_diversity": self.actor_diversity,
             "actor_keys": sorted(self.actor_keys),
+            "independent_unit_policy": UNIT_POLICY_VERSION,
+            "independent_unit_count": len(self.independent_units),
+            "independent_units": [unit.to_dict() for _, unit in sorted(self.independent_units.items())],
             "first_evidence_at": dict(sorted(self.first_evidence_at.items())),
             "periods": [self.periods[key].to_dict() for key in sorted(self.periods)],
             "update_count": self.update_count,
@@ -333,8 +338,19 @@ class TrendStateManager:
             if previous_first is None or event_time < previous_first:
                 state.first_evidence_at[evidence_type] = event_time
 
-            for actor_key in _actor_keys(observation):
+            observation_actors = _actor_keys(observation)
+            for actor_key in observation_actors:
                 state.actor_keys.add(actor_key)
+
+            independent = independent_unit(
+                observation,
+                event_time=event_time,
+                actor_keys=observation_actors,
+            )
+            state.independent_units[independent.unit_key] = select_representative(
+                state.independent_units.get(independent.unit_key),
+                independent,
+            )
 
             period = _month_bucket(event_time)
             bucket = state.periods.setdefault(period, PeriodBucket(period=period))
