@@ -79,6 +79,7 @@ def run_github_pipeline(
     repository_sort: str = "updated",
     max_history_repositories_per_cluster: int = 3,
     history_similarity_threshold: float = 0.82,
+    experimental_event_local_threshold: float | None = None,
     observed_at: datetime | None = None,
     profile_override: str | None = None,
 ) -> GitHubPipelineOutput:
@@ -135,6 +136,7 @@ def run_github_pipeline(
         policy=GitHubBridgePolicy(
             max_repositories_per_trend=max_history_repositories_per_cluster,
             similarity_threshold=history_similarity_threshold,
+            experimental_event_local_threshold=experimental_event_local_threshold,
         ),
     )
     checked = verified = accepted = rejected = 0
