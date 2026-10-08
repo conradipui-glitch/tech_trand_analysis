@@ -304,6 +304,18 @@ class TrendStateManager:
             state.microcluster_ids.add(cluster.cluster_id)
             return 0
 
+        # Validate the scoring provenance of ALL incoming records before any
+        # centroid/counter mutation. A malformed orphan Git event must not
+        # leave partially written raw or scoring state.
+        prepared_independent = {
+            oid: independent_unit(
+                incoming_by_id[oid],
+                event_time=_event_time(incoming_by_id[oid]),
+                actor_keys=_actor_keys(incoming_by_id[oid]),
+            )
+            for oid in new_ids
+        }
+
         old_count = state.observation_count
         new_count = len(new_ids)
         if old_count > 0:
@@ -342,11 +354,7 @@ class TrendStateManager:
             for actor_key in observation_actors:
                 state.actor_keys.add(actor_key)
 
-            independent = independent_unit(
-                observation,
-                event_time=event_time,
-                actor_keys=observation_actors,
-            )
+            independent = prepared_independent[observation_id]
             state.independent_units[independent.unit_key] = select_representative(
                 state.independent_units.get(independent.unit_key),
                 independent,
