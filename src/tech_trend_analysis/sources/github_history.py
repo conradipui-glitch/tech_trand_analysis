@@ -340,7 +340,7 @@ class GitHubHistoryClient:
             matched = _matched_terms(text, query)
             if not matched:
                 continue
-            occurred_at = str(item.get("published_at") or item.get("created_at") or "").strip()
+            occurred_at = str(item.get("published_at") or "").strip()
             url = str(item.get("html_url") or "").strip()
             external_id = str(item.get("id") or item.get("tag_name") or "").strip()
             if not occurred_at or not url or not external_id:
@@ -361,41 +361,12 @@ class GitHubHistoryClient:
         return events
 
     def _search_tags(self, query: GitHubHistoryQuery) -> list[VerifiedGitEvent]:
-        payload = self._get_json(f"/repos/{query.repository}/tags", params={"per_page": "100"})
-        if not isinstance(payload, list):
-            raise GitHubHistoryProtocolError("tags payload must be a list")
-        events: list[VerifiedGitEvent] = []
-        for item in payload:
-            if not isinstance(item, dict):
-                continue
-            tag_name = str(item.get("name") or "").strip()
-            matched = _matched_terms(tag_name, query)
-            commit_ref = item.get("commit")
-            if not matched or not isinstance(commit_ref, dict):
-                continue
-            sha = str(commit_ref.get("sha") or "").strip()
-            if not sha:
-                continue
-            detail = self._get_json(f"/repos/{query.repository}/commits/{quote(sha, safe='')}")
-            if not isinstance(detail, dict) or not isinstance(detail.get("commit"), dict):
-                continue
-            occurred_at = _commit_time(detail["commit"])
-            if occurred_at is None:
-                continue
-            events.append(
-                VerifiedGitEvent(
-                    repository=query.repository,
-                    event_kind="tag",
-                    external_id=tag_name,
-                    occurred_at=occurred_at,
-                    title=tag_name,
-                    url=f"https://github.com/{query.repository}/releases/tag/{quote(tag_name, safe='')}",
-                    matched_terms=matched,
-                    source_endpoint=f"GET /repos/{query.repository}/tags",
-                    evidence_text=tag_name,
-                )
-            )
-        return events
+        # GitHub's listing of lightweight tags has no creation timestamp.
+        # The referenced commit date can be YEARS older than the tag; using
+        # it as the tag's publication date would invent pre-origin evidence.
+        # Until annotated-tag tagger dates are explicitly validated, fail
+        # closed and rely on actual commits / published releases.
+        return []
 
     def _get_json(self, path: str, *, params: dict[str, str] | None = None) -> Any:
         last_error: Exception | None = None
@@ -420,8 +391,15 @@ class GitHubHistoryClient:
 
 
 def _search_terms(query: GitHubHistoryQuery) -> tuple[str, ...]:
+    # GitHub commit search is case-insensitive; deduplicate LoRA/lora query
+    # strings to save API quota, while preserving preferred distinctive term.
     values = [*query.distinctive_terms, *query.aliases]
-    return tuple(dict.fromkeys(value.strip() for value in values if value.strip()))
+    chosen: dict[str, str] = {}
+    for value in values:
+        term = value.strip()
+        if term:
+            chosen.setdefault(term.casefold(), term)
+    return tuple(chosen.values())
 
 
 def _matched_terms(text: str, query: GitHubHistoryQuery) -> tuple[str, ...]:
