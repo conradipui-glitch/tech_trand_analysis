@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime
 from typing import Any, Mapping
 
@@ -10,7 +10,7 @@ import numpy as np
 from .trend_state import PeriodBucket, TrendState
 
 
-SCORE_VERSION = "0.1.0"
+SCORE_VERSION = "0.2.0"
 
 COMPONENT_WEIGHTS: dict[str, float] = {
     "growth": 0.22,
@@ -90,6 +90,11 @@ class EmergingScorer:
         self.max_maturity_penalty_points = max_maturity_penalty_points
 
     def score(self, state: TrendState, *, as_of: date) -> EmergingScoreResult:
+        # Raw Observation counts are intentionally preserved for audit. The
+        # score consumes independent evidence units only, so a snapshot and
+        # many commits from the same GitHub repository cannot inflate growth,
+        # confidence or historical first-seen signals.
+        state = _score_independent_projection(state)
         first_seen = _parse_date(state.first_seen)
         last_seen = _parse_date(state.last_seen)
         if first_seen > as_of:
@@ -139,6 +144,44 @@ class EmergingScorer:
             stage=stage,
             components=components,
         )
+
+
+def _score_independent_projection(state: TrendState) -> TrendState:
+    """Rebuild scoring-only temporal and diversity counters from unique units.
+
+    The raw TrendState remains unchanged for evidence drilldown. Older/manual
+    states without recorded units use their existing counters as a legacy
+    baseline; new ingests always record a unit for each Observation.
+    """
+    if not state.independent_units:
+        return state
+    units = tuple(state.independent_units.values())
+    periods: dict[str, PeriodBucket] = {}
+    evidence: dict[str, int] = {}
+    providers: dict[str, int] = {}
+    actors: set[str] = set()
+    first_evidence: dict[str, str] = {}
+    for unit in units:
+        evidence[unit.evidence_type] = evidence.get(unit.evidence_type, 0) + 1
+        providers[unit.provider] = providers.get(unit.provider, 0) + 1
+        actors.update(unit.actor_keys)
+        prior = first_evidence.get(unit.evidence_type)
+        if prior is None or unit.event_time < prior:
+            first_evidence[unit.evidence_type] = unit.event_time
+        month = unit.event_time[:7]
+        bucket = periods.setdefault(month, PeriodBucket(period=month))
+        bucket.add(evidence_type=unit.evidence_type, provider=unit.provider)
+    return replace(
+        state,
+        observation_ids={unit.unit_key for unit in units},
+        evidence_counts=evidence,
+        provider_counts=providers,
+        actor_keys=actors,
+        periods=periods,
+        first_evidence_at=first_evidence,
+        first_seen=min(unit.event_time for unit in units),
+        last_seen=max(unit.event_time for unit in units),
+    )
 
 
 def _growth_component(counts: list[int]) -> ScoreComponent:
