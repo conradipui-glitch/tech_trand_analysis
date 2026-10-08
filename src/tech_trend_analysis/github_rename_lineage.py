@@ -47,6 +47,7 @@ def trace_renamed_module(
     anchor_time: str,
     candidate_time: str,
     paths: tuple[str, ...],
+    candidate_paths: tuple[str, ...] = (),
     max_hops: int = 3,
     max_history: int = 40,
     max_commit_details: int = 12,
@@ -136,5 +137,10 @@ def trace_renamed_module(
         current.add(transition.to_path)
         transitions.append(transition)
         cursor_sha, cursor_date = transition.sha, _time(transition.occurred_at)
+        # The candidate itself is already independently retrieved by SHA.
+        # Once a verified chain reaches one of its changed source paths, do
+        # not query hundreds of unrelated changes in the renamed module.
+        if set(candidate_paths).intersection(current):
+            return RenameResolution(tuple(sorted(current)), tuple(transitions), True, "candidate_path_reached")
 
     return RenameResolution(tuple(sorted(current)), tuple(transitions), False, "max_rename_hops_reached")
