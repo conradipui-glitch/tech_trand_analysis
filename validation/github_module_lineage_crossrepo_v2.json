@@ -1,0 +1,76 @@
+{
+  "version": "0.1.0",
+  "frozen_at": "2026-10-09",
+  "scope": "Cross-repository supporting module change verification; auxiliary evidence only, never new adoption or first_seen.",
+  "method": "Hand-labeled SHA pairs from GitHub message and diff BEFORE executing ancestry verifier; convenience QA, not blinded or representative.",
+  "technology_direction": "low-rank adaptation of large language models",
+  "anchors": [
+    {
+      "repo": "huggingface/trl",
+      "sha": "b60ce797d8eed012323a83411335399f9f5338de",
+      "event_date": "2024-08-06T16:02:59Z",
+      "cases": [
+        {
+          "sha": "375b3ebc85fd75f25fcadb74b37057040ef344c7",
+          "expected": true,
+          "notes": "Later LoRA target-parameters source code in same generic trainer utils module"
+        },
+        {
+          "sha": "d45eaab3af6ab8c80a7c5b65df607a5152ed0f77",
+          "expected": false,
+          "notes": "Unrelated vLLM quantization in same shared module"
+        },
+        {
+          "sha": "814012959506bf315cb9b3bbc8bd6570b3255997",
+          "expected": false,
+          "notes": "Older documentation-only change"
+        }
+      ]
+    },
+    {
+      "repo": "tloen/alpaca-lora",
+      "sha": "26f64780ad7f18a6a0ec24be044f703b8d65d16f",
+      "event_date": "2023-03-13T21:34:26Z",
+      "cases": [
+        {
+          "sha": "2d719c11cf2fae7ba5802adc9161986ca6c5508b",
+          "expected": true,
+          "notes": "LoRA PEFT adapter checkpoint restore in same finetune source file"
+        },
+        {
+          "sha": "65fb8225c09af81feb5edb1abb12560f02930703",
+          "expected": false,
+          "notes": "Lint only, not an executable LoRA feature change"
+        },
+        {
+          "sha": "179f3974f833b6e6c24e1340fd1c0786c0ba8450",
+          "expected": false,
+          "notes": "Training label length fix, unrelated to LoRA module change despite same file"
+        }
+      ]
+    },
+    {
+      "repo": "huggingface/peft",
+      "sha": "e8160370247b3b61f57e59eb3f49acf9e3618b4b",
+      "event_date": "2022-11-30T09:21:26Z",
+      "cases": [
+        {
+          "sha": "d04f6661eec9dc2811cabe6c4405e64a9d49a07f",
+          "expected": true,
+          "notes": "LoRAConfig improvement after project source-directory migration. May require verified multi-commit rename lineage (anticipated miss)."
+        },
+        {
+          "sha": "814012959506bf315cb9b3bbc8bd6570b3255997",
+          "repository": "huggingface/trl",
+          "expected": false,
+          "notes": "Cross-repository, documentation-only older event"
+        },
+        {
+          "sha": "e8160370247b3b61f57e59eb3f49acf9e3618b4b",
+          "expected": false,
+          "notes": "Same SHA as anchor; replay is not new development"
+        }
+      ]
+    }
+  ]
+}
