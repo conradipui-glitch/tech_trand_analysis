@@ -30,11 +30,12 @@
 
 ## NEXT
 
+- [ ] B-044 Cross-repo independent supporting-module lineage validation, including verified code renames, long-lived git branches, docs-only changes and LoRA-radio negatives, before any score integration. Pilot B-043 covers only one repo.
 - [ ] B-036 Подтвердить live temporal enrichment в режиме достаточном для production: legacy BGE-M3 0/4 accepted, B-039 event-local **эксперимент** 2/4 accepted; реальный end-to-end путь технически доказан, но независимая оценка FP/ранних дат и устойчивости ещё открыта. См. `research/github-event-local-validation.md`.
 - [ ] B-037 Устранить double counting repository snapshot + verified event того же проекта/актора в Emerging Score; score должен учитывать независимое evidence, не число технических записей.
 - [x] B-040 Bounded chronological event retrieval + same-SHA code patch + earliest semantically accepted event per repository (experimental). Live PEFT/BGE-M3: 30 candidates, first accepted `add lora support` `2022-11-30T09:21:26Z`, cosine 0.51376. Tags without a defensible creation time excluded; tests green. See `research/github-chronology-b040-b041.md`.
 - [x] B-042 Separate immutable same-SHA source patch evidence for LoRA/RAG commit history; source-only executable added lines, no docs/comments/removed code, protection against spoofed marker, bridge opt-in. NEW fixed holdout: 15 Git SHAs from 8 other repos; BGE-M3 threshold 0.425 unchanged, 1/6→3/6 TP (recall 16.7→50.0%), 0/9 FP both. **Code/evaluation complete but production quality gate NOT passed.** See `research/github-patch-b042.md`.
-- [ ] B-043 Проверить indirect/supporting code changes: lineage к ранее датированному подтверждённому source module того же репозитория, исключить заднюю датировку, docs-only и повторный учёт adoption; сначала новый frozen sample, затем live BGE test. Не снижать 0.425 автоматически.
+- [x] B-043 Supporting code module lineage prototype. Только уже подтверждённый earlier commit, same repo + GitHub compare ancestor status ahead + executable same-module changes; shared utils changes require family-specific added code. No TrendState/score/first_seen mutation. Live BGE-M3 7-case frozen pilot in huggingface/trl: TP1/TN6/FP0/FN0, anchor cosine 0.51906 vs experimental 0.425. **One-repo sanity result, NOT production validation**. Details in research/github-module-lineage-b043.md.
 - [ ] B-041 Independent quality gate: first external repository holdout frozen BEFORE scoring: 18 real Git commits, 11 positives/7 negatives from 5 previously unused repos. Message-only event gate + frozen 0.425 BGE achieved TP4/FN7/TN7/FP0 (**36.4% recall**): quality gate NOT passed. Further genuinely blinded/randomized sample and patch-enriched evaluation still required; see `research/github-chronology-b040-b041.md`.
 - [x] B-039 Первичная event-local LoRA/RAG калибровка: gold v0 24 (12+/12-), CI+реальная BGE-M3 (holdout recall 57.1%→85.7%, FP=0/7), экспериментальный threshold 0.425 выбран на calibration; live LoRA: 0/4→2/4 accepted, legacy centroid 0.82 оставлен без изменений. **Валидация пока не production-ready**, корпус малый/частично synthetic, B-040/B-041 нужны до широкого применения. Отчёт: `research/github-event-local-validation.md`.
 - [x] B-034 Реализовать GitHub pipeline bridge: present-day repository discovery → BGE-M3 microclustering → timestamp-verified Git event → same-model semantic gate → existing TrendState. Добавлены `github_history_bridge.py`, `github_live_pipeline.py`, local CLI, contract/integration tests; CI green. Исторические query terms не подмешиваются в semantic embedding; actor identity сохраняется; repo `created_at` не датирует тренд. См. `research/github-discovery-history-bridge.md`. Единый live BGE-M3 pilot вынесен в B-036.
@@ -51,7 +52,7 @@
 - [ ] B-050 Targeted report enrichment.
 - [ ] B-051 Company/research case enrichment.
 - [ ] B-052 Полный API/runtime deployment detector jobs после vertical slice.
-- [ ] B-053 Final product UI polish поверх уже работающего operator shell.
+- [ ] B-053 Final product UI polish поверх уже работающего operator shell. Future analytics workspace brief: docs/12_PRODUCT_UI_ROADMAP.md; apply user-provided Frontend Studio package after grounded dynamic end-to-end TOP candidates are useful.
 - [ ] B-054 Дополнительные providers.
 - [ ] B-055 Dataset для distillation.
 - [ ] B-056 Оценить R2 Data Catalog/R2 SQL после появления реального Parquet/Iceberg workload.
