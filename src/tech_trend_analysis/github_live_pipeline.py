@@ -74,6 +74,7 @@ def run_github_pipeline(
     context_terms: Sequence[str] = (),
     distinctive_terms: Sequence[str] = (),
     max_discovery: int = 20,
+    repository_sort: str = "updated",
     max_history_repositories_per_cluster: int = 3,
     history_similarity_threshold: float = 0.82,
     observed_at: datetime | None = None,
@@ -100,6 +101,7 @@ def run_github_pipeline(
         query_text=query_text.strip(),
         query_id=f"live-github:{clock.strftime('%Y%m%dT%H%M%SZ')}",
         per_page=min(100, max_discovery),
+        sort=repository_sort,
         max_pages=1,
     )
     discovered = [
