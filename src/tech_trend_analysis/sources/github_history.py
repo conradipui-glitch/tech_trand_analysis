@@ -181,45 +181,148 @@ class GitHubHistoryClient:
             return None
         return min(events, key=lambda event: _parse_time(event.occurred_at))
 
-    def _search_commits(self, query: GitHubHistoryQuery) -> list[VerifiedGitEvent]:
+    def candidate_events(
+        self,
+        query: GitHubHistoryQuery,
+        *,
+        max_candidates: int = 24,
+        commit_pages_per_term: int = 2,
+        max_diff_checks: int = 6,
+    ) -> tuple[VerifiedGitEvent, ...]:
+        """Bounded chronological candidate pool, NOT proof of first-ever use.
+
+        This broader retrieval intentionally includes ambiguous short aliases.
+        The caller MUST apply technology-specific event-local verification and
+        similarity. Never treat a lexical hit as historical implementation.
+        """
+        if not 1 <= max_candidates <= 100:
+            raise ValueError("max_candidates must be 1..100")
+        if not 1 <= commit_pages_per_term <= 4:
+            raise ValueError("commit_pages_per_term must be 1..4")
+        if not 0 <= max_diff_checks <= 12:
+            raise ValueError("max_diff_checks must be 0..12")
+        all_events = [
+            *self._search_commits(query, pages=commit_pages_per_term, recall_only=True),
+            *self._search_releases(query),
+            *self._search_tags(query),
+        ]
+        # Stable de-dup across aliases. Sort by actual event time, never by
+        # API result order or mutable repository metadata.
+        unique: dict[tuple[str, str], VerifiedGitEvent] = {}
+        for event in all_events:
+            unique.setdefault((event.event_kind, event.external_id), event)
+        ordered = sorted(
+            unique.values(),
+            key=lambda event: (_parse_time(event.occurred_at), event.event_kind, event.external_id),
+        )[:max_candidates]
+        enriched: list[VerifiedGitEvent] = []
+        diff_checks = 0
+        for event in ordered:
+            # A short, ambiguous commit message can be disambiguated using
+            # the immutable patch/filenames belonging to the very same SHA.
+            if event.event_kind == "commit" and diff_checks < max_diff_checks and len(event.evidence_text or "") < 180:
+                diff_checks += 1
+                enriched.append(self._enrich_commit_patch(query.repository, event))
+            else:
+                enriched.append(event)
+        return tuple(enriched)
+
+    def _enrich_commit_patch(self, repository: str, event: VerifiedGitEvent) -> VerifiedGitEvent:
+        payload = self._get_json(f"/repos/{repository}/commits/{quote(event.external_id, safe='')}")
+        if not isinstance(payload, dict) or not isinstance(payload.get("files"), list):
+            return event
+        # Restrict to actual added lines in source files, avoiding removed or
+        # comment-only context and unrelated release note text.
+        snippets: list[str] = []
+        for item in payload["files"][:20]:
+            if not isinstance(item, dict):
+                continue
+            filename = str(item.get("filename") or "")
+            if not filename.endswith((".py", ".ts", ".tsx", ".js", ".rs", ".cpp", ".c", ".go")):
+                continue
+            patch = str(item.get("patch") or "")
+            added = [
+                line[1:].strip() for line in patch.splitlines()
+                if line.startswith("+") and not line.startswith("+++")
+                and any(token in line.casefold() for token in ("lora", "loralib", "ragretriever", "retrieval"))
+                and not line[1:].lstrip().startswith(("#", "//", "*"))
+            ]
+            if added:
+                snippets.append(f"FILE {filename}\n" + "\n".join(added[:8]))
+            if len(snippets) >= 3:
+                break
+        if not snippets:
+            return event
+        return VerifiedGitEvent(
+            repository=event.repository,
+            event_kind=event.event_kind,
+            external_id=event.external_id,
+            occurred_at=event.occurred_at,
+            title=event.title,
+            url=event.url,
+            matched_terms=event.matched_terms,
+            source_endpoint=event.source_endpoint,
+            evidence_text=((event.evidence_text or event.title) + "\nGIT_PATCH_ADDED_LINES\n" + "\n".join(snippets))[:4000],
+        )
+
+    def _search_commits(
+        self,
+        query: GitHubHistoryQuery,
+        *,
+        pages: int = 1,
+        recall_only: bool = False,
+    ) -> list[VerifiedGitEvent]:
         events: dict[str, VerifiedGitEvent] = {}
         for search_term in _search_terms(query):
-            params = {
-                "q": f'"{search_term}" repo:{query.repository}',
-                "sort": "committer-date",
-                "order": "asc",
-                "per_page": "20",
-            }
-            payload = self._get_json("/search/commits", params=params)
-            if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
-                raise GitHubHistoryProtocolError("commit search payload must contain items[]")
-            for item in payload["items"]:
-                if not isinstance(item, dict):
-                    continue
-                commit = item.get("commit")
-                if not isinstance(commit, dict):
-                    continue
-                message = str(commit.get("message") or "").strip()
-                matched = _matched_terms(message, query)
-                if not matched:
-                    continue
-                sha = str(item.get("sha") or "").strip()
-                html_url = str(item.get("html_url") or "").strip()
-                occurred_at = _commit_time(commit)
-                if not sha or not html_url or occurred_at is None:
-                    continue
-                event = VerifiedGitEvent(
-                    repository=query.repository,
-                    event_kind="commit",
-                    external_id=sha,
-                    occurred_at=occurred_at,
-                    title=_first_line(message) or f"commit {sha[:12]}",
-                    url=html_url,
-                    matched_terms=matched,
-                    source_endpoint="GET /search/commits",
-                    evidence_text=message[:4000],
-                )
-                events[sha] = event
+            for page in range(1, pages + 1):
+                params = {
+                    "q": f'"{search_term}" repo:{query.repository}',
+                    "sort": "committer-date",
+                    "order": "asc",
+                    "per_page": "20",
+                    "page": str(page),
+                }
+                payload = self._get_json("/search/commits", params=params)
+                if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
+                    raise GitHubHistoryProtocolError("commit search payload must contain items[]")
+                for item in payload["items"]:
+                    if not isinstance(item, dict):
+                        continue
+                    commit = item.get("commit")
+                    if not isinstance(commit, dict):
+                        continue
+                    message = str(commit.get("message") or "").strip()
+                    matched = _matched_terms(message, query)
+                    if not matched and recall_only:
+                        # Recall expansion only; never an acceptance. Even LoRa
+                        # radio is allowed into this candidate pool for later rejection.
+                        normalized = _normalize(message)
+                        tokens = set(_tokens(message))
+                        matched = tuple(
+                            alias for alias in query.aliases
+                            if len(_tokens(alias)) == 1 and _tokens(alias)[0] in tokens
+                        )
+                    if not matched:
+                        continue
+                    sha = str(item.get("sha") or "").strip()
+                    html_url = str(item.get("html_url") or "").strip()
+                    occurred_at = _commit_time(commit)
+                    if not sha or not html_url or occurred_at is None:
+                        continue
+                    event = VerifiedGitEvent(
+                        repository=query.repository,
+                        event_kind="commit",
+                        external_id=sha,
+                        occurred_at=occurred_at,
+                        title=_first_line(message) or f"commit {sha[:12]}",
+                        url=html_url,
+                        matched_terms=matched,
+                        source_endpoint="GET /search/commits",
+                        evidence_text=message[:4000],
+                    )
+                    events[sha] = event
+                if len(payload["items"]) < 20:
+                    break
         return list(events.values())
 
     def _search_releases(self, query: GitHubHistoryQuery) -> list[VerifiedGitEvent]:
