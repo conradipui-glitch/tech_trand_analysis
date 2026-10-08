@@ -101,6 +101,47 @@ class EmergingScorerTests(unittest.TestCase):
         self.assertLess(score.components["growth"].value, 50)
         self.assertLess(score.components["persistence"].value, 50)
 
+    def test_b031_research_only_even_high_scientific_momentum_is_not_applied_emergence(self):
+        from tech_trend_analysis.scoring import _stage, is_research_only
+        state = make_state(
+            trend_id="research-only", profile="software_ai",
+            first_seen="2026-03-01T00:00:00Z",
+            last_seen="2026-08-29T00:00:00Z",
+            monthly_counts={
+                "2026-03": 1, "2026-04": 2, "2026-05": 4,
+                "2026-06": 8, "2026-07": 13, "2026-08": 21,
+            },
+            evidence_counts={"research": 49},
+            provider_counts={"openalex": 49},
+            actor_count=14, observation_count=49,
+            first_evidence_at={"research": "2026-03-01T00:00:00Z"},
+        )
+        self.assertTrue(is_research_only(state))
+        self.assertEqual("weak_signal",
+                         _stage(state, total=90.0, confidence=0.9, maturity=0))
+        result = self.scorer.score(state, as_of=AS_OF)
+        self.assertNotIn(result.stage, {"emerging", "early_adoption"})
+        self.assertEqual("weak_signal", result.stage)
+
+    def test_b031_verified_applied_evidence_may_advance_lifecycle(self):
+        from tech_trend_analysis.scoring import _stage, is_research_only
+        state = make_state(
+            trend_id="research-plus-implementation", profile="software_ai",
+            first_seen="2026-03-01T00:00:00Z",
+            last_seen="2026-08-29T00:00:00Z",
+            monthly_counts={"2026-06": 2, "2026-07": 4, "2026-08": 8},
+            evidence_counts={"research": 6, "implementation": 8},
+            provider_counts={"openalex": 6, "github": 8},
+            actor_count=6, observation_count=14,
+            first_evidence_at={
+                "research": "2026-03-01T00:00:00Z",
+                "implementation": "2026-06-01T00:00:00Z",
+            },
+        )
+        self.assertFalse(is_research_only(state))
+        self.assertEqual("emerging",
+                         _stage(state, total=90.0, confidence=0.9, maturity=0))
+
     def test_mature_high_volume_topic_is_penalized(self):
         mature = make_state(
             trend_id="mature",
