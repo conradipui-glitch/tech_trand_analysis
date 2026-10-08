@@ -30,8 +30,9 @@
 
 ## NEXT
 
-- [ ] B-036 Проверить единый live pipeline с реальной BGE-M3 на 5–10 GitHub репозиториях, вручную оценить accepted/rejected event history и влияние на first_seen. GitHub Actions `github-live-pipeline-pilot` добавлен, результат требует проверки.
+- [ ] B-036 Подтвердить live temporal enrichment на BGE-M3: три bounded Actions пилота технически прошли (RAG 6 repos/0 verified; LoRA 6 repos/4 verified/0 accepted). BGE cosine для Git event vs repository centroid 0.39–0.52 при threshold 0.82. Pipeline fail-closed и code/tests green, но historical acceptance НЕ доказан; см. `research/github-discovery-history-bridge.md`. Следующий шаг — B-039, затем повторный positive/negative live pilot.
 - [ ] B-037 Устранить double counting repository snapshot + verified event того же проекта/актора в Emerging Score; score должен учитывать независимое evidence, не число технических записей.
+- [ ] B-039 Разметить GitHub commit/release/tag positive+negative corpus и откалибровать отдельный cross-modal historical gate для repository description ↔ event text; проверять локальные релевантные фрагменты changelog и безопасный early-event recall (напр. PEFT `add lora support`), без слепого снижения порога.
 - [x] B-034 Реализовать GitHub pipeline bridge: present-day repository discovery → BGE-M3 microclustering → timestamp-verified Git event → same-model semantic gate → existing TrendState. Добавлены `github_history_bridge.py`, `github_live_pipeline.py`, local CLI, contract/integration tests; CI green. Исторические query terms не подмешиваются в semantic embedding; actor identity сохраняется; repo `created_at` не датирует тренд. См. `research/github-discovery-history-bridge.md`. Единый live BGE-M3 pilot вынесен в B-036.
 - [ ] B-031 Проверить false positive: research-only cluster на retrospective/live evidence.
 - [ ] B-033 Проверить profile routing на минимум трёх направлениях: AI agents, neuromorphic computing, solid-state batteries.
