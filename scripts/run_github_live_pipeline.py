@@ -24,6 +24,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--context", action="append", default=[], help="Context for ambiguous short aliases")
     p.add_argument("--distinctive", action="append", default=[], help="Unambiguous implementation term")
     p.add_argument("--limit", type=int, default=20)
+    p.add_argument("--sort", choices=("updated", "stars", "forks"), default="updated")
     p.add_argument("--max-history-per-cluster", type=int, default=3)
     p.add_argument("--model", default="BAAI/bge-m3")
     p.add_argument("--similarity-threshold", type=float, default=0.82)
@@ -62,6 +63,7 @@ def main() -> None:
             context_terms=args.context,
             distinctive_terms=args.distinctive,
             max_discovery=args.limit,
+            repository_sort=args.sort,
             max_history_repositories_per_cluster=args.max_history_per_cluster,
             history_similarity_threshold=args.similarity_threshold,
             profile_override=args.profile,
