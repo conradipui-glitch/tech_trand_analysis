@@ -117,6 +117,11 @@ class ProviderRoute:
     evidence_type: str
     collection_priority: float
     query_strategy: str | None = None
+    execution_status: str = "ready"
+
+    @property
+    def collectable(self) -> bool:
+        return self.enabled and self.execution_status == "ready"
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,7 +134,17 @@ class RouteDecision:
 
     @property
     def enabled_providers(self) -> tuple[ProviderRoute, ...]:
+        """Policy-enabled providers; NOT necessarily executable today."""
         return tuple(provider for provider in self.providers if provider.enabled)
+
+    @property
+    def collectable_providers(self) -> tuple[ProviderRoute, ...]:
+        """Adapters installed per registry. Credential health is not probed."""
+        return tuple(provider for provider in self.providers if provider.collectable)
+
+    @property
+    def blocked_providers(self) -> tuple[ProviderRoute, ...]:
+        return tuple(p for p in self.providers if p.enabled and not p.collectable)
 
 
 class SourceRouter:
@@ -218,6 +233,7 @@ class SourceRouter:
                         if policy.get("query_strategy") is not None
                         else None
                     ),
+                    execution_status=str(provider_def.get("execution_status", "ready")),
                 )
             )
 
@@ -288,6 +304,12 @@ def _validate_config(config: dict[str, Any]) -> dict[str, Any]:
         evidence_type = provider.get("evidence_type")
         if not isinstance(evidence_type, str) or not evidence_type:
             raise ValueError(f"provider missing evidence_type: {provider_id}")
+        execution_status = provider.get("execution_status", "ready")
+        if execution_status not in {
+            "ready", "adapter_missing", "credentials_missing",
+            "adapter_and_credentials_missing",
+        }:
+            raise ValueError(f"unsupported provider execution_status: {provider_id}")
 
     missing_profiles = SUPPORTED_PROFILES.difference(profiles)
     if missing_profiles:
