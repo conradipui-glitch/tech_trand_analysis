@@ -1,0 +1,62 @@
+{
+  "version": "0.1.0",
+  "frozen_at": "2026-10-09",
+  "protocol": "New repos not in previous B-044/B-045 lineage evaluation. Manual labels pre-run; candidate must change executable code in a module established by anchor, not merely mention technology somewhere in repo. Use previously frozen method/threshold; no fit.",
+  "limitations": "Convenience sample, not randomized or independently blinded. Negative same-domain other-module changes do NOT mean technology absent from repository.",
+  "groups": [
+    {
+      "repository": "langroid/langroid",
+      "technology_direction": "retrieval augmented generation",
+      "anchor_sha": "151a11fa4c4e7c0107c720b5ffb75982371dfec1",
+      "cases": [
+        {
+          "sha": "4a71233775bfbe36f9b7bff50c9994a66551fed9",
+          "expected": true,
+          "reason": "RAG tool implementation updated in same langroid/agent/tools/sciphi_search_rag_tool.py file"
+        },
+        {
+          "sha": "9448fcac977527c31cc26d5ec447d1e769599822",
+          "expected": false,
+          "reason": "RAG tool file removed; no added executable source to original module"
+        },
+        {
+          "sha": "bc9344765b7bb0b313f2622bad3808e635322f97",
+          "expected": false,
+          "reason": "Document chat and parsing retrieval changes, but not anchored SciPhi module"
+        },
+        {
+          "sha": "55afa415e79a51209e5ab0b76ada47d75b559141",
+          "expected": false,
+          "reason": "Earlier than anchor"
+        }
+      ]
+    },
+    {
+      "repository": "OpenRLHF/OpenRLHF",
+      "technology_direction": "low-rank adaptation of large language models",
+      "anchor_sha": "fc21f3eae0d161113b59cb056bbc46da98522601",
+      "cases": [
+        {
+          "sha": "5bf1a7b6f0f951252ef99dd1e1fc97948a32ca10",
+          "expected": true,
+          "reason": "Changed LoRA dropout in anchored ray PPO actor code"
+        },
+        {
+          "sha": "5a06164334f23c467cbe3dcfa7ef918c9931c567",
+          "expected": false,
+          "reason": "Relevant LoRA bugfix but different unanchored deepspeed module; not same anchored module"
+        },
+        {
+          "sha": "18010bca5ff6cfe0cde4cf654efa180e1d28afe9",
+          "expected": false,
+          "reason": "New CLI LoRA combiner is a different technology module, not maintenance of anchored one"
+        },
+        {
+          "sha": "d6c6a12a28c1dfa2ed381751e05585db13292ffe",
+          "expected": false,
+          "reason": "Older than anchor; shell/example script only"
+        }
+      ]
+    }
+  ]
+}
